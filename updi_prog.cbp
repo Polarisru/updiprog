@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="updi_prog" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/updi_prog" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="-r test.hex -c COM9 -d tiny1617 -l1 -fw 8:0x04 -b 115200" />
+				<Compiler>
+					<Add option="-std=c99" />
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/updi_prog" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="-c COM3 -b 115200 -d tiny1617 -r file.hex" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="app.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="app.h" />
+		<Unit filename="com.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="com.h" />
+		<Unit filename="devices.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="devices.h" />
+		<Unit filename="ihex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ihex.h" />
+		<Unit filename="link.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="link.h" />
+		<Unit filename="log.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="log.h" />
+		<Unit filename="main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="nvm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="nvm.h" />
+		<Unit filename="phy.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="phy.h" />
+		<Unit filename="progress.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="progress.h" />
+		<Unit filename="sleep.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="sleep.h" />
+		<Unit filename="updi.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
