@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <termios.h>
+#include <unistd.h>
 #endif
 #include <stdio.h>
 #include <stdint.h>
@@ -19,7 +20,7 @@ static int fd;
 #endif
 
 static uint32_t COM_Baudrate = 115200;
-static uint16_t COM_Bytes;
+//static uint16_t COM_Bytes;
 
 /** \brief Open COM port with settings
  *
@@ -32,10 +33,10 @@ static uint16_t COM_Bytes;
  */
 bool COM_Open(char *port, uint32_t baudrate, bool have_parity, bool two_stopbits)
 {
-  char str[64];
-
   printf("Opening %s at %u baud\n", port, baudrate);
   #ifdef __MINGW32__
+  char str[64];
+
   sprintf(str, "\\\\.\\%s", port);
   hSerial = CreateFile(str, GENERIC_READ | GENERIC_WRITE, 0,
                               NULL, OPEN_EXISTING, 0, NULL);
@@ -73,23 +74,26 @@ bool COM_Open(char *port, uint32_t baudrate, bool have_parity, bool two_stopbits
     return false;
   struct termios SerialPortSettings;
   tcgetattr(fd, &SerialPortSettings);	/* Get the current attributes of the Serial port */
-	/* Setting the Baud rate */
-	cfsetispeed(&SerialPortSettings, B9600); /* Set Read  Speed as 9600                       */
-	cfsetospeed(&SerialPortSettings, B9600); /* Set Write Speed as 9600                       */
+  /* Setting the Baud rate */
+  cfsetispeed(&SerialPortSettings, B115200); /* Set Read  Speed as 9600                       */
+  cfsetospeed(&SerialPortSettings, B115200); /* Set Write Speed as 9600                       */
   if (have_parity == true)
     SerialPortSettings.c_cflag |= PARENB;   /* Enables the Parity Enable bit(PARENB) */
   else
-    SerialPortSettings.c_cflag &= ~PARENB;  /* Disables the Parity Enable bit(PARENB),So No Parity   */
+    SerialPortSettings.c_cflag &= ~PARENB;  /* Disables the Parity Enable bit(PARENB), so No Parity */
   if (two_stopbits == true)
     SerialPortSettings.c_cflag |= CSTOPB;   /* CSTOPB = 2 Stop bits */
   else
 	  SerialPortSettings.c_cflag &= ~CSTOPB;  /* CSTOPB = 2 Stop bits,here it is cleared so 1 Stop bit */
-	SerialPortSettings.c_cflag &= ~CSIZE;	    /* Clears the mask for setting the data size             */
-	SerialPortSettings.c_cflag |=  CS8;       /* Set the data bits = 8                                 */
-  SerialPortSettings.c_cflag &= ~CRTSCTS;       /* No Hardware flow Control                         */
+  SerialPortSettings.c_cflag &= ~CSIZE;	    /* Clears the mask for setting the data size             */
+  SerialPortSettings.c_cflag |=  CS8;       /* Set the data bits = 8                                 */
+  //SerialPortSettings.c_cflag &= ~CRTSCTS;       /* No Hardware flow Control                         */
   SerialPortSettings.c_cflag |= CREAD | CLOCAL; /* Enable receiver,Ignore Modem Control lines       */
   SerialPortSettings.c_iflag &= ~(IXON | IXOFF | IXANY);          /* Disable XON/XOFF flow control both i/p and o/p */
-  SerialPortSettings.c_iflag &= ~(ICANON | ECHO | ECHOE | ISIG);  /* Non Cannonical mode                            */
+  SerialPortSettings.c_iflag &= ~(ICANON | ECHO | ECHOE | ISIG);  /* Non Cannonical mode      */
+  SerialPortSettings.c_oflag = 0;                // no remapping, no delays
+  SerialPortSettings.c_cc[VMIN]  = 0;            // read doesn't block
+  SerialPortSettings.c_cc[VTIME] = 5;            // 0.1 seconds read timeout
   tcsetattr(fd, TCSANOW, &SerialPortSettings);  /* Set the attributes to the termios structure*/
   tcflush(fd, TCIFLUSH);
   #endif
@@ -170,8 +174,8 @@ int COM_Read(uint8_t *data, uint16_t len)
   ReadFile(hSerial, data, len, &dwBytesRead, NULL);
   #endif
   #ifdef __linux
-  int iOut = read(fd, data, len);
-  if (iOut < 0)
+  int dwBytesRead = read(fd, data, len);
+  if (dwBytesRead < 0)
     return -1;
   #endif
 
@@ -189,6 +193,7 @@ uint16_t COM_GetTransTime(uint16_t len)
   return (uint16_t)(len * 1000 * 11 / COM_Baudrate + 1);
 }
 
+#ifdef __MINGW32__
 void COM_WaitForTransmit(void)
 {
   COMSTAT rStat;
@@ -197,6 +202,7 @@ void COM_WaitForTransmit(void)
     ClearCommError(hSerial, &nErr, &rStat);
   } while (rStat.cbOutQue > 0);
 }
+#endif // __MINGW32__
 
 /** \brief Close current COM port
  *

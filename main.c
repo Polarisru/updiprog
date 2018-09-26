@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
   printf("|                   Ver. %3s (%00000010s)                     |\n", SW_VER_NUMBER, SW_VER_DATE);
   printf("---------------------------------------------------------------\n\n");
 
-  COM_Open("COM10", 9600, false, false);
+  COM_Open("/dev/ttyUSB0", 9600, false, false);
   i = 0;
   while (i < 100)
   {
