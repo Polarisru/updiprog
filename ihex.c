@@ -6,7 +6,7 @@ static uint8_t crc;
 
 /** \brief Convert byte to string with HEX representation
  *
- * \param [in] byte
+ * \param [in] byte One byte of data
  * \return HEX representation as string
  *
  */
@@ -26,8 +26,8 @@ static char* IHEX_AddByte(uint8_t byte)
 
 /** \brief Write Intel HEX ending to a file
  *
- * \param [in] fp
- * \return
+ * \param [in] fp File handle
+ * \return true if succeed
  *
  */
 bool IHEX_WriteEnd(FILE *fp)
@@ -37,12 +37,12 @@ bool IHEX_WriteEnd(FILE *fp)
   return true;
 }
 
-/** \brief
+/** \brief Write data buffer to HEX file
  *
- * \param [in] fp
- * \param [in] data
- * \param [in] len
- * \return
+ * \param [in] fp File handle
+ * \param [in] data Data buffer to write
+ * \param [in] len Length of data buffer
+ * \return error code as uint8_t
  *
  */
 uint8_t IHEX_WriteFile(FILE *fp, uint8_t *data, uint16_t len)
@@ -84,8 +84,8 @@ uint8_t IHEX_WriteFile(FILE *fp, uint8_t *data, uint16_t len)
 
 /** \brief Get one nibble from char
  *
- * \param [in] c
- * \return
+ * \param [in] c Char value
+ * \return data nibble as uint8_t
  *
  */
 uint8_t IHEX_GetNibble(char c)
@@ -102,8 +102,8 @@ uint8_t IHEX_GetNibble(char c)
 
 /** \brief Get full byte from two chars
  *
- * \param [in] data
- * \return
+ * \param [in] data Two chars as HEX representation
+ * \return byte value as uint8_t
  *
  */
 uint8_t IHEX_GetByte(char *data)
@@ -115,11 +115,11 @@ uint8_t IHEX_GetByte(char *data)
 
 /** \brief Read Intel HEX file to a binary memory buffer
  *
- * \param [in] fp
- * \param [out] data
- * \param [in] maxlen
- * \param [out] max_addr
- * \return
+ * \param [in] fp File handler
+ * \param [out] data Data buffer to read data into
+ * \param [in] maxlen Maximal data length
+ * \param [out] max_addr Maximal address with non-empty data
+ * \return error code as uint8_t
  *
  */
 uint8_t IHEX_ReadFile(FILE *fp, uint8_t *data, uint16_t maxlen, uint16_t *max_addr)

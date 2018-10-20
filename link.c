@@ -200,9 +200,9 @@ bool LINK_st16(uint16_t address, uint16_t value)
 
 /** \brief
  *
- * \param
- * \param
- * \return
+ * \param [out] data Data buffer to write received data in
+ * \param [in] size Size of received data
+ * \return true if succeed
  *
  */
 bool LINK_ld_ptr_inc(uint8_t *data, uint8_t size)

@@ -6,10 +6,10 @@ static uint8_t LOG_Level = LOG_LEVEL_ERROR;
 
 /** \brief Print log message according level settings
  *
- * \param [in] level
- * \param [in] msg
- * \param [in]
- * \return
+ * \param [in] level Log level for the message
+ * \param [in] msg Message text
+ * \param [in] additional parameters (formatters and values)
+ * \return Nothing
  *
  */
 void LOG_Print(uint8_t level, char *msg, ...)
@@ -39,8 +39,8 @@ void LOG_Print(uint8_t level, char *msg, ...)
 
 /** \brief Set log level (INFO/WARNING/ERROR)
  *
- * \param
- * \return
+ * \param [in] level New level for the log
+ * \return Nothing
  *
  */
 void LOG_SetLevel(uint8_t level)

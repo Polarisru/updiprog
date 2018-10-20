@@ -2,6 +2,15 @@
 #include <string.h>
 #include "progress.h"
 
+/** \brief Print progress bar with prefix
+ *
+ * \param [in] iteration Current iteration
+ * \param [in] total Total number of iterations
+ * \param [in] prefix Prefix text
+ * \param [in] fill Char to use for filling the bar
+ * \return Noting
+ *
+ */
 void PROGRESS_Print(uint16_t iteration, uint16_t total, char *prefix, char fill)
 {
   uint8_t filledLength;
@@ -24,6 +33,11 @@ void PROGRESS_Print(uint16_t iteration, uint16_t total, char *prefix, char fill)
     printf("\n");
 }
 
+/** \brief Do break in the output
+ *
+ * \return Nothing
+ *
+ */
 void PROGRESS_Break(void)
 {
   printf("\n");

@@ -4,7 +4,7 @@
 tDevice DEVICES_List[] =
 {
   {
-    "tiny1617",
+    "tiny161x",
     0x8000,
     16 * 1024,
     64,
@@ -16,7 +16,7 @@ tDevice DEVICES_List[] =
     9
   },
   {
-    "tiny817",
+    "tiny81x",
     0x8000,
     8 * 1024,
     64,
@@ -28,7 +28,7 @@ tDevice DEVICES_List[] =
     9
   },
   {
-    "tiny417",
+    "tiny41x",
     0x8000,
     4 * 1024,
     64,
@@ -40,7 +40,7 @@ tDevice DEVICES_List[] =
     9
   },
   {
-    "tiny214",
+    "tiny21x",
     0x8000,
     2 * 1024,
     64,
@@ -57,8 +57,8 @@ static int8_t DEVICE_Id = DEVICE_UNKNOWN_ID;
 
 /** \brief Get device ID from name string
  *
- * \param [in] name
- * \return
+ * \param [in] name Name to find as string
+ * \return index of the found device or -1 as error
  *
  */
 int8_t DEVICES_GetId(char *name)
@@ -80,7 +80,7 @@ int8_t DEVICES_GetId(char *name)
 
 /** \brief Get flash memory length for selected device
  *
- * \return
+ * \return Size of the flash memory as uint16_t
  *
  */
 uint16_t DEVICES_GetFlashLength(void)
@@ -93,7 +93,7 @@ uint16_t DEVICES_GetFlashLength(void)
 
 /** \brief Get flash start address for selected device
  *
- * \return
+ * \return Address of the flash area as uint16_t
  *
  */
 uint16_t DEVICES_GetFlashStart(void)
@@ -106,7 +106,7 @@ uint16_t DEVICES_GetFlashStart(void)
 
 /** \brief Get flash page size for selected device
  *
- * \return
+ * \return Flash page size as uint16_t
  *
  */
 uint16_t DEVICES_GetPageSize(void)
@@ -119,7 +119,7 @@ uint16_t DEVICES_GetPageSize(void)
 
 /** \brief Get NVM control registers address for selected device
  *
- * \return
+ * \return NVM registers adress as uint16_t
  *
  */
 uint16_t DEVICES_GetNvmctrlAddress(void)
@@ -132,7 +132,7 @@ uint16_t DEVICES_GetNvmctrlAddress(void)
 
 /** \brief Get fuses address for selected device
  *
- * \return
+ * \return Fuses address as uint16_t
  *
  */
 uint16_t DEVICES_GetFusesAddress(void)
@@ -145,7 +145,7 @@ uint16_t DEVICES_GetFusesAddress(void)
 
 /** \brief Get number of the fuses for selected device
  *
- * \return
+ * \return Number of the fuses as uint8_t
  *
  */
 uint8_t DEVICES_GetFusesNumber(void)
@@ -158,7 +158,7 @@ uint8_t DEVICES_GetFusesNumber(void)
 
 /** \brief Get number of devices in the list
  *
- * \return
+ * \return Number of the devices as uint8_t
  *
  */
 uint8_t DEVICES_GetNumber(void)
@@ -168,7 +168,7 @@ uint8_t DEVICES_GetNumber(void)
 
 /** \brief Get string name of the device by ID
  *
- * \return
+ * \return Device name as string
  *
  */
 char *DEVICES_GetNameByNumber(uint8_t number)

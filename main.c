@@ -1,5 +1,4 @@
-// TODO (AleksejKiselev#1#): Parse and write fuses
-// TODO (AleksejKiselev#1#): Add baudrate settings for Linux
+// TODO (Alex#1#): Get Linux version working
 // TODO (AleksejKiselev#1#): Optimize source code
 // TODO (AleksejKiselev#1#): Add Doxygen comments
 // TODO (AleksejKiselev#1#): Read device info
@@ -9,6 +8,8 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <limits.h>
+#include <unistd.h>
 #include "devices.h"
 #include "link.h"
 #include "log.h"
@@ -19,8 +20,8 @@
 #define COMPORT_LEN     (32)
 #define FUSES_LEN       (128)
 
-#define SW_VER_NUMBER   "0.1"
-#define SW_VER_DATE     "13.09.2018"
+#define SW_VER_NUMBER   "0.2"
+#define SW_VER_DATE     "20.10.2018"
 
 typedef struct
 {
@@ -40,21 +41,26 @@ typedef struct
 
 tParam parameters;
 
+/** \brief Print help screen with list of commands
+ *
+ * \return Nothing
+ *
+ */
 void help(void)
 {
   uint8_t i;
 
-  printf("  -b set COM baudrate (default=115200)\n");
-  printf("  -d DEVICE - target device (tinyXXX)\n");
-  printf("  -c COM_PORT - COM port to use(Windows: COMx | *nix: /dev/ttyX)\n");
-  printf("  -e - erase device\n");
-  printf("  -fw - write fuses\n");
-  printf("  -fr - read all fuses\n");
-  printf("  -h - show this help screen\n");
-  printf("  -mX - set level of messaging (0-all/1-warnings/2-errors)\n");
-  printf("  -r FILE_TO_READ.HEX - Hex file to read flash in\n");
-  printf("  -p - use DTR line to power device\n");
-  printf("  -w FILE_TO_WRITE.HEX - Hex file to write to flash\n");
+  printf("  -b BAUDRATE - set COM baudrate (default=115200)\n");
+  printf("  -d DEVICE   - target device (tinyXXX)\n");
+  printf("  -c COM_PORT - COM port to use (Win: COMx | *nix: /dev/ttyX)\n");
+  printf("  -e          - erase device\n");
+  printf("  -fw X:0xYY  - write fuses (X - fuse number, 0xYY - hex value)\n");
+  printf("  -fr         - read all fuses\n");
+  printf("  -h          - show this help screen\n");
+  printf("  -mX         - set logging level (0-all/1-warnings/2-errors)\n");
+  printf("  -r FILE.HEX - Hex file to read MCU flash into\n");
+  printf("  -p          - use DTR line to power device\n");
+  printf("  -w FILE.HEX - Hex file to write to MCU flash\n");
   printf("\n");
   printf("  List of supported devices:\n    ");
   for (i = 0; i < DEVICES_GetNumber(); i++)
@@ -62,12 +68,13 @@ void help(void)
     printf(DEVICES_GetNameByNumber(i));
     printf("  ");
   }
+  printf("\n");
 }
 
 /** \brief Main application function
  *
- * \param [in] argc
- * \param [in] argv
+ * \param [in] argc Number of command line arguments
+ * \param [in] argv Command line arguments
  * \return exit code for OS
  *
  */
@@ -79,27 +86,27 @@ int main(int argc, char* argv[])
   uint32_t tVal;
   char *pch;
   uint16_t val;
-  int ccc;
+  //int ccc;
 
-  printf("---------------------------------------------------------------\n");
-  printf("|      Simple command line interface for UPDI programming     |\n");
-  printf("|                   Ver. %3s (%00000010s)                     |\n", SW_VER_NUMBER, SW_VER_DATE);
-  printf("---------------------------------------------------------------\n\n");
+  printf("################################################################\n");
+  printf("#      Simple command line interface for UPDI programming      #\n");
+  printf("#                Ver. %3s (%00000010s) by A.K.                 #\n", SW_VER_NUMBER, SW_VER_DATE);
+  printf("################################################################\n\n");
 
-  COM_Open("/dev/ttyUSB0", 9600, false, false);
-  i = 0;
-  while (i < 100)
-  {
-    char buf[16];
-    COM_Write("Test\n", 5);
-    strcpy(buf, "");
-    ccc = COM_Read(buf, 5);
-    buf[5] = 0;
-    printf("R: %s (%d)\n", buf, strlen(buf));
-    if (ccc != 5)
-      printf("ERROR!\n");
-  }
-  return 0;
+//  COM_Open("/dev/ttyUSB0", 9600, false, false);
+//  i = 0;
+//  while (i < 100)
+//  {
+//    char buf[16];
+//    COM_Write("Test\n", 5);
+//    strcpy(buf, "");
+//    ccc = COM_Read(buf, 5);
+//    buf[5] = 0;
+//    printf("R: %s (%d)\n", buf, strlen(buf));
+//    if (ccc != 5)
+//      printf("ERROR!\n");
+//  }
+//  return 0;
 
   if (argc < 2)
   {
@@ -125,6 +132,8 @@ int main(int argc, char* argv[])
           {
             if (sscanf(argv[i + 1], "%u", &tVal) == 1)
               parameters.baudrate = tVal;
+            else
+              printf("Baudrate parameter is wrong!\n");
           }
           break;
         case 'c':
@@ -135,7 +144,7 @@ int main(int argc, char* argv[])
             parameters.port[COMPORT_LEN - 1] = 0;
           } else
           {
-            printf("COM-port name is missing!");
+            printf("COM-port name is missing!\n");
           }
           break;
         case 'd':
@@ -145,7 +154,7 @@ int main(int argc, char* argv[])
             parameters.device = DEVICES_GetId(argv[i + 1]);
             if (parameters.device < 0)
             {
-              printf("Wrong or unsupported device type: %s", argv[i + 1]);
+              printf("Wrong or unsupported device type: %s\n", argv[i + 1]);
               error = true;
             }
           }
@@ -167,7 +176,7 @@ int main(int argc, char* argv[])
             {
               if (strlen(parameters.fuses) + strlen(argv[i + 1]) + 1 >= FUSES_LEN - 1)
               {
-                printf("Fuses line is too long: %s", parameters.fuses);
+                printf("Fuses line is too long: %s\n", parameters.fuses);
                 error = true;
                 break;
               }
@@ -179,7 +188,7 @@ int main(int argc, char* argv[])
             }
             if (strlen(parameters.fuses) <= 1)
             {
-              printf("Wrong or unsupported fuses parameter: -fw %s", parameters.fuses);
+              printf("%s: wrong or unsupported fuses parameter: %s\n", "-fw", parameters.fuses);
               error = true;
             } else
             {
@@ -187,7 +196,7 @@ int main(int argc, char* argv[])
             }
           } else
           {
-            printf("Wrong or unsupported fuses parameter: %s", argv[i]);
+            printf("%s: wrong or unsupported fuses parameter!\n", argv[i]);
             error = true;
           }
           break;
@@ -209,7 +218,7 @@ int main(int argc, char* argv[])
             i++;
           } else
           {
-            printf("Wrong file name for reading!");
+            printf("%s: wrong file name for reading!", argv[i]);
             error = true;
           }
           break;
@@ -228,9 +237,12 @@ int main(int argc, char* argv[])
             i++;
           } else
           {
-            printf("Wrong file name for writing!");
+            printf("%s: wrong file name for writing!\n", argv[i]);
             error = true;
           }
+          break;
+        default:
+          printf("Unknown parameter: %s\n", argv[i]);
           break;
       }
     }
@@ -241,29 +253,29 @@ int main(int argc, char* argv[])
 
   if (parameters.device < 0)
   {
-    printf("Device type (-d) is not set!");
+    printf("Device type (-d) is not set!\n");
     return -1;
   }
   if (strlen(parameters.port) == 0)
   {
-    printf("COM port name is missing!");
+    printf("COM port name is missing!\n");
     return -1;
   }
   if (!parameters.read && !parameters.write && !parameters.erase && !parameters.rd_fuses && !parameters.wr_fuses)
   {
-    printf("Nothing to do, stopping");
+    printf("Nothing to do, stopping\n");
     return -1;
   }
 
   if (LINK_Init(parameters.port, parameters.baudrate, false) == false)
   {
-    printf("Can't open port: %s\nPlease check connection and try again.", parameters.port);
+    printf("Can't open port: %s\nPlease check connection and try again.\n", parameters.port);
     return -1;
   }
 
   if (NVM_EnterProgmode() == false)
   {
-    printf("Can't enter programming mode, exiting");
+    printf("Can't enter programming mode, exiting\n");
     return -1;
   }
   //print("Device is locked. Performing unlock with chip erase.")
@@ -289,7 +301,7 @@ int main(int argc, char* argv[])
       pch++;
       if (sscanf(pch, "%hu:0x%02X", &val, &tVal) != 2)
       {
-        printf("Wrong fuse settings at: _%.12s...", pch);
+        printf("Wrong fuse settings at: _%.12s...\n", pch);
       } else
       {
         i = (uint8_t)val;
@@ -316,7 +328,23 @@ int main(int argc, char* argv[])
   }
   if (parameters.read == true)
   {
-    printf("Reading to file: %s\n", parameters.rd_file);
+    char cwd[PATH_MAX];
+    char ch;
+
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
+      cwd[0] = 0;
+    #ifdef __MINGW32__
+    ch = '\\';
+    #endif // __MINGW32__
+    #ifdef __linux
+    ch = '/';
+    #endif // __linux
+    if (strchr(parameters.rd_file, ch) != NULL)
+    {
+      cwd[0] = 0;
+      ch = 0;
+    }
+    printf("Reading to file: %s%c%s\n", cwd, ch, parameters.rd_file);
     NVM_SaveIhex(parameters.rd_file, DEVICES_GetFlashStart(), DEVICES_GetFlashLength());
   }
 

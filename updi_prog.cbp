@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="-r test.hex -c /dev/ttyUSB0 -d tiny1617 -l1 -fw 8:0x04 -b 115200" />
+				<Option parameters="-r test.hex -c COM10 -d tiny161x -m2 -fw 8:0x04 -b 9600" />
 				<Compiler>
 					<Add option="-std=c99" />
 					<Add option="-g" />

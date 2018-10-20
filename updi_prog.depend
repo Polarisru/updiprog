@@ -42,24 +42,26 @@
 	<stdio.h>
 	<stdbool.h>
 
-1537919308 source:e:\projects\updi_prog\com.c
+1540072528 source:e:\projects\updi_prog\com.c
 	<windows.h>
 	<winbase.h>
 	<sys/types.h>
 	<fcntl.h>
 	<termios.h>
+	<unistd.h>
 	<stdio.h>
 	<stdint.h>
 	<stdbool.h>
+	<math.h>
 
-1536922972 source:e:\projects\updi_prog\devices.c
+1539994064 source:e:\projects\updi_prog\devices.c
 	<string.h>
 	"devices.h"
 
 1536847590 e:\projects\updi_prog\devices.h
 	<stdint.h>
 
-1536922996 source:e:\projects\updi_prog\ihex.c
+1539993826 source:e:\projects\updi_prog\ihex.c
 	<stdio.h>
 	<string.h>
 	"ihex.h"
@@ -69,12 +71,14 @@
 	<stdio.h>
 	<stdbool.h>
 
-1537915323 source:e:\projects\updi_prog\main.c
+1539994811 source:e:\projects\updi_prog\main.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
 	<stdint.h>
 	<stdbool.h>
+	<limits.h>
+	<unistd.h>
 	"devices.h"
 	"link.h"
 	"log.h"
@@ -197,7 +201,7 @@
 
 1536675408 e:\projects\updi_prog\updi.h
 
-1536929416 source:e:\projects\updi_prog\link.c
+1539993599 source:e:\projects\updi_prog\link.c
 	<string.h>
 	"log.h"
 	"phy.h"
@@ -207,7 +211,7 @@
 	<stdint.h>
 	<stdbool.h>
 
-1536921988 source:e:\projects\updi_prog\log.c
+1539993889 source:e:\projects\updi_prog\log.c
 	<stdio.h>
 	<stdarg.h>
 	"log.h"
@@ -236,7 +240,7 @@
 	<stdint.h>
 	<stdbool.h>
 
-1536941424 source:e:\projects\updi_prog\phy.c
+1539993175 source:e:\projects\updi_prog\phy.c
 	<unistd.h>
 	"com.h"
 	"log.h"
@@ -244,11 +248,11 @@
 	"updi.h"
 	"sleep.h"
 
-1536842438 source:e:\projects\updi_prog\progress.c
+1539994688 source:e:\projects\updi_prog\progress.c
 	<stdio.h>
 	<string.h>
 	"progress.h"
 
-1536934600 source:e:\projects\updi_prog\sleep.c
+1540072385 source:e:\projects\updi_prog\sleep.c
 	"sleep.h"
 
