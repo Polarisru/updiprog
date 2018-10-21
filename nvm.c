@@ -281,7 +281,7 @@ bool NVM_LoadIhex(char *filename, uint16_t address, uint16_t len)
   uint8_t errCode;
   uint16_t max_addr, min_addr;
   FILE *fp;
-  bool res;
+  bool res = false;
 
   fdata = malloc(len);
   if (!fdata)
@@ -315,16 +315,7 @@ bool NVM_LoadIhex(char *filename, uint16_t address, uint16_t len)
   free(fdata);
   fclose(fp);
 
-  //self.logger.warning("Loaded {0:d} bytes from ihex starting at address 0x{1:04X}".format(len(data), start_address))
-
-  // Size check
-  //if len(data) > self.device.flash_size:
-  //    raise Exception("ihex too large for flash")
-
-  // Offset to actual flash start
-  //if start_address < self.device.flash_start:
-  //    self.logger.info("Adjusting flash offset to address 0x{:04X}".format(self.device.flash_start))
-  //    start_address += self.device.flash_start
+  // Size check: not implemented yet
 
   return res;
 }
