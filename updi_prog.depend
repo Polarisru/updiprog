@@ -54,7 +54,7 @@
 	<stdbool.h>
 	<math.h>
 
-1539994064 source:e:\projects\updi_prog\devices.c
+1540130754 source:e:\projects\updi_prog\devices.c
 	<string.h>
 	"devices.h"
 
@@ -71,7 +71,7 @@
 	<stdio.h>
 	<stdbool.h>
 
-1539994811 source:e:\projects\updi_prog\main.c
+1540073324 source:e:\projects\updi_prog\main.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
@@ -176,7 +176,7 @@
 1536934598 source:c:\work\updi_prog\sleep.c
 	"sleep.h"
 
-1536934654 source:e:\projects\updi_prog\app.c
+1540075293 source:e:\projects\updi_prog\app.c
 	<stdio.h>
 	<unistd.h>
 	"devices.h"
@@ -220,7 +220,7 @@
 	<stdint.h>
 	<stdbool.h>
 
-1536851512 source:e:\projects\updi_prog\nvm.c
+1540074962 source:e:\projects\updi_prog\nvm.c
 	<stdlib.h>
 	<string.h>
 	"app.h"

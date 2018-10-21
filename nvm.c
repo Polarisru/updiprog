@@ -11,33 +11,48 @@
 
 static bool NVM_Progmode = false;
 
+/** \brief Read info about current device
+ *
+ * \return
+ *
+ */
 bool NVM_GetDeviceInfo(void)
 {
-  //Reads device info
   LOG_Print(LOG_LEVEL_INFO, "Reading device info");
   return true;//self.application.device_info()
 }
 
+/** \brief Enter programming mode
+ *
+ * \return true if succeed
+ *
+ */
 bool NVM_EnterProgmode(void)
 {
-  //Enter programming mode
   LOG_Print(LOG_LEVEL_INFO, "Entering NVM programming mode");
   NVM_Progmode = APP_EnterProgmode();
   return NVM_Progmode;
 }
 
+/** \brief Leave programming mode
+ *
+ * \return Nothing
+ *
+ */
 void NVM_LeaveProgmode(void)
 {
-  //Leave programming mode
   LOG_Print(LOG_LEVEL_INFO, "Leaving NVM programming mode");
   APP_LeaveProgmode();
   NVM_Progmode = false;
 }
 
+/** \brief Unlock and erase a device
+ *
+ * \return Nothing
+ *
+ */
 void NVM_UnlockDevice(void)
 {
-  //Unlock and erase a device
-
   if (NVM_Progmode == true)
   {
     LOG_Print(LOG_LEVEL_WARNING, "Device already unlocked");
@@ -49,10 +64,13 @@ void NVM_UnlockDevice(void)
     NVM_Progmode = true;
 }
 
+/** \brief Erase chip flash memory
+ *
+ * \return true if succeed
+ *
+ */
 bool NVM_ChipErase(void)
 {
-  //Erase (unlocked) device
-
   if (NVM_Progmode == false)
   {
     LOG_Print(LOG_LEVEL_ERROR, "Enter progmode first!");
@@ -62,9 +80,16 @@ bool NVM_ChipErase(void)
   return APP_ChipErase();
 }
 
+/** \brief Read data from flash memory
+ *
+ * \param [in] address Starting address
+ * \param [out] data Buffer to write data
+ * \param [in] size Length of data to read
+ * \return true if succeed
+ *
+ */
 bool NVM_ReadFlash(uint16_t address, uint8_t *data, uint16_t size)
 {
-  //Reads from flash
   uint16_t i;
   uint16_t pages;
   uint8_t page_size;
@@ -115,9 +140,16 @@ bool NVM_ReadFlash(uint16_t address, uint8_t *data, uint16_t size)
   return true;
 }
 
+/** \brief Write data buffer to flash
+ *
+ * \param [in] address Address to start writing
+ * \param [in] data Data buffer to write
+ * \param [in] size Length of data
+ * \return true if succeed
+ *
+ */
 bool NVM_WriteFlash(uint16_t address, uint8_t *data, uint16_t size)
 {
-  //Writes to flash
   uint8_t page_size;
   uint16_t pages;
   uint16_t i;
@@ -131,9 +163,6 @@ bool NVM_WriteFlash(uint16_t address, uint8_t *data, uint16_t size)
   }
 
   page_size = DEVICES_GetPageSize();
-
-  // Pad to full page
-  //data = self.pad_data(data, self.device.flash_pagesize)
 
   // Divide up into pages
   pages = size / page_size;
@@ -170,9 +199,14 @@ bool NVM_WriteFlash(uint16_t address, uint8_t *data, uint16_t size)
   return true;
 }
 
+/** \brief Read fuse value
+ *
+ * \param [in] fusenum Number of the fuse
+ * \return Fuse value as uint8_t
+ *
+ */
 uint8_t NVM_ReadFuse(uint8_t fusenum)
 {
-  //Reads one fuse value
   uint16_t address;
 
   // Must be in prog mode
@@ -187,9 +221,15 @@ uint8_t NVM_ReadFuse(uint8_t fusenum)
   return LINK_ld(address);
 }
 
+/** \brief Write fuse value
+ *
+ * \param [in] fusenum Number of the fuse
+ * \param [in] value Fuse value
+ * \return true if succeed
+ *
+ */
 bool NVM_WriteFuse(uint8_t fusenum, uint8_t value)
 {
-  //Writes one fuse value
   uint16_t fuse_address;
   uint16_t address;
   uint8_t data;
@@ -200,7 +240,6 @@ bool NVM_WriteFuse(uint8_t fusenum, uint8_t value)
     LOG_Print(LOG_LEVEL_ERROR, "Enter progmode first!");
     return false;
   }
-
 
   if (!APP_WaitFlashReady())
   {
@@ -228,9 +267,16 @@ bool NVM_WriteFuse(uint8_t fusenum, uint8_t value)
   return true;
 }
 
+/** \brief Load data from Intel HEX format
+ *
+ * \param [in] filename Name of the HEX file
+ * \param [in] address Chip starting address
+ * \param [in] len Length of the data
+ * \return true if succeed
+ *
+ */
 bool NVM_LoadIhex(char *filename, uint16_t address, uint16_t len)
 {
-  //Load from intel hex format
   uint8_t *fdata;
   uint8_t errCode;
   uint16_t max_addr, min_addr;
@@ -283,9 +329,16 @@ bool NVM_LoadIhex(char *filename, uint16_t address, uint16_t len)
   return res;
 }
 
+/** \brief Save file to Intel HEX format
+ *
+ * \param [in] filename Name of the HEX file
+ * \param [in] address Chip starting address
+ * \param [in] len Length of data
+ * \return true if succeed
+ *
+ */
 bool NVM_SaveIhex(char *filename, uint16_t address, uint16_t len)
 {
-  //Save file to intel hex format
   uint8_t *fdata;
   FILE *fp;
   bool res = false;

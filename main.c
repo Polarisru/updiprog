@@ -1,7 +1,7 @@
-// TODO (Alex#1#): Get Linux version working
-// TODO (AleksejKiselev#1#): Optimize source code
-// TODO (AleksejKiselev#1#): Add Doxygen comments
-// TODO (AleksejKiselev#1#): Read device info
+// TODO (A.K.#1#): Get Linux version working
+// TODO (A.K.#1#): Optimize source code
+// TODO (A.K.#1#): Add Doxygen comments
+// TODO (A.K.#1#): Read device info
 
 #include <stdio.h>
 #include <stdlib.h>

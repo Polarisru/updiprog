@@ -290,7 +290,7 @@ bool APP_WriteNvm(uint16_t address, uint8_t *data, uint16_t len, bool use_word_a
   // Wait for NVM controller to be ready again
   if (!APP_WaitFlashReady())
   {
-    LOG_Print(LOG_LEVEL_WARNING, "Timeout by waiting for flash ready after page write ");
+    LOG_Print(LOG_LEVEL_WARNING, "Timeout by waiting for flash ready after page write");
     return false;
   }
 
