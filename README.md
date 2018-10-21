@@ -1,14 +1,12 @@
 # updiprog
 
-This is C version of UPDI interface utility with improvements, you could refer to the Python version:
-
-    https://github.com/mraardvark/pyupdi.git
+This is C version of UPDI interface utility with improvements, you could refer to the Python version: [pyupdi](https://github.com/mraardvark/pyupdi.git)
 	
 pyupdi is a Python utility for programming AVR devices with UPDI interface using a standard TTL serial port.
 
-The main purpose is the possibility to use UPDI to flash the new TinyAVR at any PC. No external libraries were used, so no dependencies. I have some problems during installing pyupdi because of absence of the Internet connection, so I had to copy all necessary packages and wheels first and to install them manually. Yes, I know about the possibility to compile the executable from the Python script, but pyupdi has also some disadvantages like lackage of reading the flash content, slow speed of programming and probably no error handling at all. So I have decided to improve it and get it working with standard C language.
+The main purpose is the possibility to use UPDI to flash the new TinyAVR at any PC. No external libraries were used, so no dependencies. I have some problems during pyupdi installation because of absence of the Internet connection, so I had to copy all necessary packages and wheels first and to install them manually. Yes, I know about the possibility to compile the executable from the Python script, but pyupdi has also some disadvantages like lackage of reading the flash content, slow speed of programming and probably no error handling at all. So I have decided to improve it and get it working with standard C language.
 
-[Code::Blocks IDE] (http://www.codeblocks.org/) was used to write code and compile it.
+[Code::Blocks IDE](http://www.codeblocks.org/) was used to write code and compile it.
 
 I have tried to write it portable for Windows and Linux but can't really test it on Linux because of the driver bug for CH340 USB to serial converter, it can't work with parity bits.
 
