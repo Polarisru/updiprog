@@ -10,7 +10,7 @@ enum {
   LOG_LEVEL_LAST
 };
 
-extern void LOG_Print(uint8_t level, char *msg, ...);
-extern void LOG_SetLevel(uint8_t level);
+void LOG_Print(uint8_t level, char *msg, ...);
+void LOG_SetLevel(uint8_t level);
 
 #endif

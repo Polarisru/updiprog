@@ -36,7 +36,7 @@ enum {
 
 #define IHEX_DIGIT(n) ((char)((n) + (((n) < 10) ? '0' : ('A' - 10))))
 
-extern uint8_t IHEX_WriteFile(FILE *fp, uint8_t *data, uint16_t len);
-extern uint8_t IHEX_ReadFile(FILE *fp, uint8_t *data, uint16_t maxlen, uint16_t *max_addr);
+uint8_t IHEX_WriteFile(FILE *fp, uint8_t *data, uint16_t len);
+uint8_t IHEX_ReadFile(FILE *fp, uint8_t *data, uint16_t maxlen, uint16_t *max_addr);
 
 #endif

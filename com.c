@@ -60,7 +60,7 @@ bool COM_Open(char *port, uint32_t baudrate, bool have_parity, bool two_stopbits
   SetCommState(hSerial, &dcbSerialParams);
   COMMTIMEOUTS timeouts;
   multiplier = (uint8_t)ceil((float)100000 / baudrate);
-  timeouts.ReadIntervalTimeout = 10 * multiplier;//0xFFFFFFFF;
+  timeouts.ReadIntervalTimeout = 20 * multiplier;
   timeouts.ReadTotalTimeoutMultiplier = 1 * multiplier;
   timeouts.ReadTotalTimeoutConstant = 100 * multiplier;
   timeouts.WriteTotalTimeoutMultiplier = 1;

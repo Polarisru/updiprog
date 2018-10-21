@@ -11,6 +11,6 @@
 #include <unistd.h>
 #endif // __linux
 
-extern void msleep(uint32_t usec);
+void msleep(uint32_t usec);
 
 #endif

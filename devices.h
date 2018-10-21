@@ -23,14 +23,14 @@ typedef struct
 
 extern tDevice DEVICES_List[];
 
-extern int8_t DEVICES_GetId(char *name);
-extern uint16_t DEVICES_GetFlashLength(void);
-extern uint16_t DEVICES_GetFlashStart(void);
-extern uint16_t DEVICES_GetPageSize(void);
-extern uint16_t DEVICES_GetNvmctrlAddress(void);
-extern uint16_t DEVICES_GetFusesAddress(void);
-extern uint8_t DEVICES_GetFusesNumber(void);
-extern uint8_t DEVICES_GetNumber(void);
-extern char *DEVICES_GetNameByNumber(uint8_t number);
+int8_t DEVICES_GetId(char *name);
+uint16_t DEVICES_GetFlashLength(void);
+uint16_t DEVICES_GetFlashStart(void);
+uint16_t DEVICES_GetPageSize(void);
+uint16_t DEVICES_GetNvmctrlAddress(void);
+uint16_t DEVICES_GetFusesAddress(void);
+uint8_t DEVICES_GetFusesNumber(void);
+uint8_t DEVICES_GetNumber(void);
+char *DEVICES_GetNameByNumber(uint8_t number);
 
 #endif // DEVICES_H
