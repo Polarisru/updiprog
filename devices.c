@@ -7,7 +7,7 @@ tDevice DEVICES_List[] =
     "tiny321x",
     0x8000,
     32 * 1024,
-    64,
+    128,
     0x0F00,
     0x1000,
     0x1100,
