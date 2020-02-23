@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 #define IHEX_LINE_LENGTH    16
-#define IHEX_MIN_STRING     12
+#define IHEX_MIN_STRING     11
 
 #define IHEX_OFFS_LEN       1
 #define IHEX_OFFS_ADDR      3
