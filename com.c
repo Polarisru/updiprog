@@ -34,6 +34,7 @@ static uint32_t COM_Baudrate = 115200;
 bool COM_Open(char *port, uint32_t baudrate, bool have_parity, bool two_stopbits)
 {
   printf("Opening %s at %u baud\n", port, baudrate);
+  COM_Baudrate = baudrate;
   #ifdef __MINGW32__
   char str[64];
   uint8_t multiplier;
@@ -66,7 +67,6 @@ bool COM_Open(char *port, uint32_t baudrate, bool have_parity, bool two_stopbits
   timeouts.WriteTotalTimeoutMultiplier = 1;
   timeouts.WriteTotalTimeoutConstant = 1;
   SetCommTimeouts(hSerial, &timeouts);
-  COM_Baudrate = baudrate;
   //COM_Bytes = 0;
   #endif
 
