@@ -101,6 +101,7 @@ bool COM_Open(char *port, uint32_t baudrate, bool have_parity, bool two_stopbits
       cfsetospeed(&SerialPortSettings, B115200);
       break;
   }
+  cfmakeraw(&SerialPortSettings);           /* Set raw mode (special processing disabled) */
   if (have_parity == true)
     SerialPortSettings.c_cflag |= PARENB;   /* Enables the Parity Enable bit(PARENB) */
   else
@@ -108,14 +109,8 @@ bool COM_Open(char *port, uint32_t baudrate, bool have_parity, bool two_stopbits
   if (two_stopbits == true)
     SerialPortSettings.c_cflag |= CSTOPB;   /* CSTOPB = 2 Stop bits */
   else
-	  SerialPortSettings.c_cflag &= ~CSTOPB;  /* CSTOPB = 2 Stop bits,here it is cleared so 1 Stop bit */
-  SerialPortSettings.c_cflag &= ~CSIZE;	    /* Clears the mask for setting the data size             */
-  SerialPortSettings.c_cflag |=  CS8;       /* Set the data bits = 8                                 */
-  //SerialPortSettings.c_cflag &= ~CRTSCTS;       /* No Hardware flow Control                         */
+    SerialPortSettings.c_cflag &= ~CSTOPB;  /* CSTOPB = 2 Stop bits,here it is cleared so 1 Stop bit */
   SerialPortSettings.c_cflag |= (CREAD | CLOCAL); /* Enable receiver,Ignore Modem Control lines       */
-  SerialPortSettings.c_iflag &= ~(IXON | IXOFF | IXANY);          /* Disable XON/XOFF flow control both i/p and o/p */
-  SerialPortSettings.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);  /* Non Cannonical mode      */
-  SerialPortSettings.c_oflag = 0;                // no remapping, no delays
   SerialPortSettings.c_cc[VMIN]  = 0;            // read doesn't block
   SerialPortSettings.c_cc[VTIME] = 5;            // 0.1 seconds read timeout
   tcsetattr(fd, TCSANOW, &SerialPortSettings);  /* Set the attributes to the termios structure*/
