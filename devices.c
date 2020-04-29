@@ -133,7 +133,7 @@ tDevice DEVICES_List[] =
     0x1100,
     0x1280,
     0x1300,
-    9
+    11
   },
   {
     "tiny20x",
