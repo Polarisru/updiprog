@@ -63,14 +63,11 @@ void help(void)
   printf("  -w FILE.HEX - Hex file to write to MCU flash\n");
   printf("\n");
   printf("  List of supported devices:\n    ");
-  for (i = 0; i < DEVICES_GetNumber(); i++)
+  for (i = 1; i < DEVICES_GetNumber()+1; i++)
   {
-    printf(DEVICES_GetNameByNumber(i));
-    printf(", ");
-    if (i / 4) 
-    {
-      printf("\n");
-    }
+    printf(DEVICES_GetNameByNumber(i-1));
+    printf("\t");
+    if (i % 4 == 0 ? printf("\n    "): printf(""));
   }
   printf("\n");
 }
