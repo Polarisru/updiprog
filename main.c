@@ -59,14 +59,15 @@ void help(void)
   printf("  -h          - show this help screen\n");
   printf("  -mX         - set logging level (0-all/1-warnings/2-errors)\n");
   printf("  -r FILE.HEX - Hex file to read MCU flash into\n");
-  printf("  -p          - use DTR line to power device\n");
+  //printf("  -p          - use DTR line to power device\n");
   printf("  -w FILE.HEX - Hex file to write to MCU flash\n");
   printf("\n");
   printf("  List of supported devices:\n    ");
-  for (i = 0; i < DEVICES_GetNumber(); i++)
+  for (i = 1; i < DEVICES_GetNumber()+1; i++)
   {
-    printf(DEVICES_GetNameByNumber(i));
-    printf("  ");
+    printf(DEVICES_GetNameByNumber(i-1));
+    printf("\t");
+    if (i % 4 == 0 ? printf("\n    "): printf(""));
   }
   printf("\n");
 }
@@ -92,21 +93,6 @@ int main(int argc, char* argv[])
   printf("#      Simple command line interface for UPDI programming      #\n");
   printf("#                Ver. %3s (%00000010s) by A.K.                 #\n", SW_VER_NUMBER, SW_VER_DATE);
   printf("################################################################\n\n");
-
-//  COM_Open("/dev/ttyUSB0", 9600, false, false);
-//  i = 0;
-//  while (i < 100)
-//  {
-//    char buf[16];
-//    COM_Write("Test\n", 5);
-//    strcpy(buf, "");
-//    ccc = COM_Read(buf, 5);
-//    buf[5] = 0;
-//    printf("R: %s (%d)\n", buf, strlen(buf));
-//    if (ccc != 5)
-//      printf("ERROR!\n");
-//  }
-//  return 0;
 
   if (argc < 2)
   {
@@ -278,16 +264,9 @@ int main(int argc, char* argv[])
     printf("Can't enter programming mode, exiting\n");
     return -1;
   }
-  //print("Device is locked. Performing unlock with chip erase.")
-  //nvm.unlock_device()
-
 
   printf("Working with device: %s\n", DEVICES_GetNameByNumber(parameters.device));
   /**< process input parameters */
-  if (parameters.show_info == true)
-  {
-    //nvm.get_device_info()
-  }
   if (parameters.erase == true)
   {
     printf("Erasing\n");
