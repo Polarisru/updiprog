@@ -7,7 +7,7 @@
 #include <windows.h>
 #include <unistd.h>
 #endif // __MINGW32__
-#ifdef __linux
+#if defined(__APPLE__) || defined(__linux)
 #include <unistd.h>
 #endif // __linux
 
