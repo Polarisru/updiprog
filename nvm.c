@@ -296,8 +296,8 @@ bool NVM_LoadIhex(char *filename, uint16_t address, uint16_t len)
     return false;
   }
   max_addr = 0;
-  min_addr = 0;
-  errCode = IHEX_ReadFile(fp, fdata, len, &max_addr);
+  min_addr = 0xFFFF;
+  errCode = IHEX_ReadFile(fp, fdata, len, &min_addr, &max_addr);
   switch (errCode)
   {
     case IHEX_ERROR_FILE:
@@ -309,7 +309,8 @@ bool NVM_LoadIhex(char *filename, uint16_t address, uint16_t len)
       break;
     case IHEX_ERROR_NONE:
       // write data buffer to flash
-      res = NVM_WriteFlash(address, fdata, max_addr - min_addr);
+      if (min_addr < max_addr)
+        res = NVM_WriteFlash(address + min_addr, &fdata[min_addr], max_addr - min_addr);
       break;
   }
   free(fdata);

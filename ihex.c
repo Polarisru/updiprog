@@ -119,11 +119,13 @@ uint8_t IHEX_GetByte(char *data)
  * \param [in] fp File handler
  * \param [out] data Data buffer to read data into
  * \param [in] maxlen Maximal data length
+ * \param [out] min_addr Minimal address with non-empty data
  * \param [out] max_addr Maximal address with non-empty data
  * \return error code as uint8_t
  *
  */
-uint8_t IHEX_ReadFile(FILE *fp, uint8_t *data, uint16_t maxlen, uint16_t *max_addr)
+uint8_t IHEX_ReadFile(FILE *fp, uint8_t *data, uint16_t maxlen,
+                      uint16_t *min_addr, uint16_t *max_addr)
 {
   uint16_t addr;
   uint8_t len;
@@ -162,7 +164,11 @@ uint8_t IHEX_ReadFile(FILE *fp, uint8_t *data, uint16_t maxlen, uint16_t *max_ad
         {
           byte = IHEX_GetByte(&str[IHEX_OFFS_DATA + i * 2]);
           if (byte != 0xFF)
+          {
             *max_addr = addr + segment + i + 1;
+            if ((addr + segment + i) < *min_addr)
+              *min_addr = (addr + segment + i);
+          }
           data[addr + segment + i] = byte;
         }
         break;
