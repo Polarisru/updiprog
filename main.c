@@ -314,7 +314,7 @@ int main(int argc, char* argv[])
     #ifdef __MINGW32__
     ch = '\\';
     #endif // __MINGW32__
-    #ifdef __linux
+    #if defined(__APPLE__) || defined(__linux)
     ch = '/';
     #endif // __linux
     if (strchr(parameters.rd_file, ch) != NULL)
