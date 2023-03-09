@@ -20,8 +20,8 @@
 #define COMPORT_LEN     (32)
 #define FUSES_LEN       (128)
 
-#define SW_VER_NUMBER   "0.6"
-#define SW_VER_DATE     "06.04.2022"
+#define SW_VER_NUMBER   "0.7"
+#define SW_VER_DATE     "09.03.2022"
 
 typedef struct
 {
@@ -30,6 +30,8 @@ typedef struct
   bool      read;
   bool      wr_fuses;
   bool      rd_fuses;
+  bool      lock;
+  bool      unlock;
   bool      show_info;
   uint32_t  baudrate;
   int8_t    device;
@@ -56,6 +58,8 @@ void help(void)
   printf("  -e          - erase device\n");
   printf("  -fw X:0xYY  - write fuses (X - fuse number, 0xYY - hex value)\n");
   printf("  -fr         - read all fuses\n");
+  printf("  -ls         - lock device\n");
+  printf("  -lr         - unlock device\n");
   printf("  -h          - show this help screen\n");
   printf("  -mX         - set logging level (0-all/1-warnings/2-errors)\n");
   printf("  -r FILE.HEX - Hex file to read MCU flash into\n");
@@ -66,7 +70,10 @@ void help(void)
   for (i = 1; i < DEVICES_GetNumber()+1; i++)
   {
     printf("%-14s", DEVICES_GetNameByNumber(i-1));
-    if (i % 4 == 0 ? printf("\n    "): printf(""));
+    if (i % 4 == 0)
+    {
+      printf("\n    ");
+    }
   }
   printf("\n");
 }
@@ -207,6 +214,21 @@ int main(int argc, char* argv[])
             error = true;
           }
           break;
+        case 'l':
+          /**< lock/unlock device */
+          if (argv[i][2] == 's')
+          {
+            parameters.lock = true;
+          } else
+          if (argv[i][2] == 'r')
+          {
+            parameters.unlock = true;
+          } else
+          {
+            printf("%s: wrong or unsupported fuses parameter!\n", argv[i]);
+            error = true;
+          }
+          break;
         case 'm':
           /**< level of messaging */
           if (argv[i][2] >= '0' && argv[i][2] <= '2')
@@ -246,7 +268,8 @@ int main(int argc, char* argv[])
     printf("COM port name is missing!\n");
     return -1;
   }
-  if (!parameters.read && !parameters.write && !parameters.erase && !parameters.rd_fuses && !parameters.wr_fuses)
+  if (!parameters.read && !parameters.write && !parameters.erase && !parameters.rd_fuses &&
+      !parameters.wr_fuses && !parameters.unlock)
   {
     printf("Nothing to do, stopping\n");
     return -1;
@@ -258,13 +281,23 @@ int main(int argc, char* argv[])
     return -1;
   }
 
+  printf("Working with device: %s\n", DEVICES_GetNameByNumber(parameters.device));
+
+  if (parameters.unlock == true)
+  {
+    printf("Unlocking...   ");
+    if (NVM_UnlockDevice() == true)
+    {
+      printf("OK\n");
+    }
+  }
+
   if (NVM_EnterProgmode() == false)
   {
     printf("Can't enter programming mode, exiting\n");
     return -1;
   }
 
-  printf("Working with device: %s\n", DEVICES_GetNameByNumber(parameters.device));
   /**< process input parameters */
   if (parameters.erase == true)
   {
@@ -324,6 +357,14 @@ int main(int argc, char* argv[])
     }
     printf("Reading to file: %s%c%s\n", cwd, ch, parameters.rd_file);
     NVM_SaveIhex(parameters.rd_file, DEVICES_GetFlashStart(), DEVICES_GetFlashLength());
+  }
+  if (parameters.lock == true)
+  {
+    printf("Locking MCU...   ");
+    if (NVM_WriteFuse(DEVICE_LOCKBIT_ADDR, 0x00) == true)
+    {
+      printf("OK\n");
+    }
   }
 
   NVM_LeaveProgmode();

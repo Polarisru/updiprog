@@ -7,6 +7,8 @@
 
 #define DEVICE_UNKNOWN_ID   (-1)
 
+#define DEVICE_LOCKBIT_ADDR (0x0A)
+
 typedef struct
 {
   char     name[DEVICES_NAME_LEN];

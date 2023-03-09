@@ -8,6 +8,7 @@
 
 bool NVM_EnterProgmode(void);
 void NVM_LeaveProgmode(void);
+bool NVM_UnlockDevice(void);
 bool NVM_ChipErase(void);
 uint8_t NVM_ReadFuse(uint8_t fusenum);
 bool NVM_WriteFuse(uint8_t fusenum, uint8_t value);

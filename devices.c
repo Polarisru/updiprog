@@ -13,7 +13,7 @@ tDevice DEVICES_List[] =
     0x1100,
     0x1280,
     0x1300,
-    11
+    9
   },
   {
     "mega320x",
@@ -25,7 +25,7 @@ tDevice DEVICES_List[] =
     0x1100,
     0x1280,
     0x1300,
-    11
+    9
   },
   {
     "mega160x",
@@ -37,7 +37,7 @@ tDevice DEVICES_List[] =
     0x1100,
     0x1280,
     0x1300,
-    11
+    9
   },
   {
     "mega80x",
@@ -49,7 +49,7 @@ tDevice DEVICES_List[] =
     0x1100,
     0x1280,
     0x1300,
-    11
+    9
   },
   {
     "tiny321x",
@@ -87,7 +87,7 @@ tDevice DEVICES_List[] =
     0x1300,
     9
   },
-  { 
+  {
     "tiny80x",
     0x8000,
     8 * 1024,
@@ -111,7 +111,7 @@ tDevice DEVICES_List[] =
     0x1300,
     9
   },
-  { 
+  {
     "tiny40x",
     0x8000,
     4 * 1024,
@@ -133,7 +133,7 @@ tDevice DEVICES_List[] =
     0x1100,
     0x1280,
     0x1300,
-    11
+    9
   },
   {
     "tiny20x",

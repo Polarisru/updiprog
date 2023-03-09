@@ -51,17 +51,23 @@ void NVM_LeaveProgmode(void)
  * \return Nothing
  *
  */
-void NVM_UnlockDevice(void)
+bool NVM_UnlockDevice(void)
 {
   if (NVM_Progmode == true)
   {
     LOG_Print(LOG_LEVEL_WARNING, "Device already unlocked");
-    return;
+  } else
+  {
+    // Unlock after using the NVM key results in prog mode.
+    if (APP_Unlock() == true)
+    {
+      NVM_Progmode = true;
+    } else
+    {
+      return false;
+    }
   }
-
-  // Unlock after using the NVM key results in prog mode.
-  if (APP_Unlock() == true)
-    NVM_Progmode = true;
+  return true;
 }
 
 /** \brief Erase chip flash memory

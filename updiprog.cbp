@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="-r test.hex -c COM10 -d tiny161x -m2 -fw 8:0x04 -b 57600" />
+				<Option parameters="-d tiny161x -c COM5 -r test.hex -fr -lr -ls" />
 				<Compiler>
 					<Add option="-std=c99" />
 					<Add option="-g" />
@@ -78,10 +78,6 @@
 		</Unit>
 		<Unit filename="sleep.h" />
 		<Unit filename="updi.h" />
-		<Extensions>
-			<code_completion />
-			<envvars />
-			<debugger />
-		</Extensions>
+		<Extensions />
 	</Project>
 </CodeBlocks_project_file>
