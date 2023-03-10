@@ -10,7 +10,7 @@ The main purpose is the possibility to use UPDI to flash the new TinyAVR at any 
 
 I have tried to write it portable for Windows and Linux but can't really test it on Linux because of the driver bug for CH340 USB to serial converter, it can't work with parity bits.
 
-I am using CH340 USB to TTL converter to program Atmel Tiny devices, you just need to connect TX and RX lines, they are actually already have a 1.5k output resistor on my connector, so just connect them and don't forget to connect GND of the converter with GND of the PCB with Tiny MCU. There is also a possibility to supply Tiny with the voltage from the CH340 converter, so this adapter seems to be a good choice to start with programming of AVR devices.
+I am using [CH340 USB to TTL converter](https://www.elektor.de/ch340-usb-to-ttl-converter-uart-module-ch340g-3-3-v-5-5-v) to program Atmel Tiny devices, you just need to connect TX and RX lines, they are actually already have a 1.5k output resistor on my connector, so just connect them and don't forget to connect GND of the converter with GND of the PCB with Tiny MCU. There is also a possibility to supply Tiny with the voltage from the CH340 converter, so this adapter seems to be a good choice to start with programming of AVR devices.
 
 <pre>
                         Vcc                     Vcc
