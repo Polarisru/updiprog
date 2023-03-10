@@ -38,6 +38,7 @@ I am using CH340 USB to TTL converter to program Atmel Tiny devices, you just ne
 	- different levels of logging
 	- faster programming/reading (about 6 seconds for the whole Tiny1616)
 	- many additional error messages
+	- locking/unlocking MCU
 
 # A brief description of all available options.
 
@@ -48,10 +49,12 @@ I am using CH340 USB to TTL converter to program Atmel Tiny devices, you just ne
 	-fw X:0xYY  - write fuses (X - fuse number, 0xYY - hex value)
 	-fr         - read all fuses
 	-h          - show this help screen
+	-ls         - lock device
+	-lr         - unlock device
 	-mX         - set logging level (0-all/1-warnings/2-errors)
 	-r FILE.HEX - Hex file to read MCU flash into
-	-p          - use DTR line to power device
 	-w FILE.HEX - Hex file to write to MCU flash
+	
   
 #### Examples:
 
