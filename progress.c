@@ -13,6 +13,9 @@
  */
 void PROGRESS_Print(uint16_t iteration, uint16_t total, char *prefix, char fill)
 {
+  #ifdef string_logger
+
+  #else
   uint8_t filledLength;
   float percent;
   char bar[PROGRESS_BAR_LENGTH + 1];
@@ -31,6 +34,7 @@ void PROGRESS_Print(uint16_t iteration, uint16_t total, char *prefix, char fill)
   // Print New Line on Complete
   if (iteration >= total)
     printf("\n");
+  #endif // string_logger
 }
 
 /** \brief Do break in the output
