@@ -271,37 +271,21 @@ bool NVM_WriteFuse(UPDI_APP * app, uint8_t fusenum, uint8_t value)
   return true;
 }
 
-/** \brief Load data from Intel HEX format
- *
- * \param [in] filename Name of the HEX file
- * \param [in] address Chip starting address
- * \param [in] len Length of the data
- * \return true if succeed
- *
- */
-bool NVM_LoadIhex(UPDI_APP * app, char *filename, uint16_t address, uint16_t len)
-{
+bool NVM_LoadIhexStream(UPDI_APP * app, IHEX_Stream * stream, uint16_t address, uint16_t len) {
   uint8_t *fdata;
   uint8_t errCode;
   uint16_t max_addr, min_addr;
-  FILE *fp;
   bool res = false;
 
   fdata = malloc(len);
   if (!fdata)
   {
-    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Unable to allocate %d bytes\n", (int)len);
-    return false;
-  }
-  if ((fp = fopen(filename, "rt")) == NULL)
-  {
-    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Unable to open file: %s", filename);
-    free(fdata);
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Unable to allocate %d bytes", (int)len);
     return false;
   }
   max_addr = 0;
   min_addr = 0xFFFF;
-  errCode = IHEX_ReadFile(fp, fdata, len, &min_addr, &max_addr);
+  errCode = IHEX_ReadStream(stream, fdata, len, &min_addr, &max_addr);
   switch (errCode)
   {
     case IHEX_ERROR_FILE:
@@ -317,12 +301,137 @@ bool NVM_LoadIhex(UPDI_APP * app, char *filename, uint16_t address, uint16_t len
         res = NVM_WriteFlash(app, address + min_addr, &fdata[min_addr], max_addr - min_addr);
       break;
   }
+
   free(fdata);
+
+  return res;
+}
+
+bool NVM_raw_eof(void* ud) {
+  NVM_raw_data *src = (NVM_raw_data *)ud;
+  return src->pos >= src->len;
+}
+
+bool NVM_raw_gets(void* ud, char * dst, int32_t cnt) {
+  NVM_raw_data *src = (NVM_raw_data *)ud;
+  int len = src->len - src->pos;
+  cnt--;
+  if (cnt <= 0) return false;
+
+  if (cnt > len)
+     cnt = len;
+  memcpy(dst, &(src->data[src->pos]), cnt);
+  dst[cnt] = 0;
+  src->pos+=cnt;
+
+  return true;
+}
+
+bool NVM_LoadIhexRaw(UPDI_APP * app, NVM_raw_data *src, uint16_t address, uint16_t len) {
+  IHEX_Stream raw_stream;
+
+  raw_stream.ud = src;
+  raw_stream.eof = &NVM_raw_eof;
+  raw_stream.gets = &NVM_raw_gets;
+
+  bool res = NVM_LoadIhexStream(app, &raw_stream, address, len);
+
+  return res;
+}
+
+bool NVM_file_eof(void* ud) {
+    return (feof((FILE *) ud));
+}
+
+bool NVM_file_gets(void* ud, char * dst, int32_t cnt) {
+    return (fgets( dst, cnt, (FILE *) ud ) != NULL);
+}
+
+/** \brief Load data from Intel HEX format
+ *
+ * \param [in] filename Name of the HEX file
+ * \param [in] address Chip starting address
+ * \param [in] len Length of the data
+ * \return true if succeed
+ *
+ */
+bool NVM_LoadIhexFile(UPDI_APP * app, char *filename, uint16_t address, uint16_t len)
+{
+  FILE *fp;
+
+  if ((fp = fopen(filename, "rt")) == NULL)
+  {
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Unable to open file: %s", filename);
+    return false;
+  }
+
+  IHEX_Stream file_stream;
+  file_stream.ud = (void*)fp;
+  file_stream.eof = &NVM_file_eof;
+  file_stream.gets = &NVM_file_gets;
+
+  bool res = NVM_LoadIhexStream(app, &file_stream, address, len);
   fclose(fp);
 
   // Size check: not implemented yet
 
   return res;
+}
+
+bool NVM_SaveIhexStream(UPDI_APP * app, IHEX_Stream * stream, uint16_t address, uint16_t len) {
+  uint8_t *fdata;
+  bool res = false;
+
+  fdata = malloc(len);
+  if (!fdata)
+  {
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Unable to allocate %d bytes", (int)len);
+    return false;
+  }
+  memset(fdata, 0xff, len);
+
+  if (NVM_ReadFlash(app, address, fdata, len) == false)
+  {
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Reading from device failed");
+  } else
+  {
+    if (IHEX_WriteStream(stream, fdata, len) == IHEX_ERROR_NONE)
+      res = true;
+    else
+      LOG_Print(app->logger, LOG_LEVEL_ERROR, "Problem writing Hex file");
+  }
+
+  free(fdata);
+
+  return res;
+}
+
+bool NVM_raw_write(void* ud, const void *ptr, int32_t len) {
+  NVM_raw_data *src = (NVM_raw_data *)ud;
+  int cnt = src->len - src->pos;
+  if (cnt <= 0) return false;
+
+  if (len > cnt)
+     len = cnt;
+  memcpy(&(src->data[src->pos]), ptr, len);
+  src->pos+=cnt;
+
+  return true;
+}
+
+bool NVM_SaveIhexRaw(UPDI_APP * app, NVM_raw_data *dst, uint16_t address, uint16_t len) {
+  IHEX_Stream raw_stream;
+
+  raw_stream.ud = dst;
+  raw_stream.write = &NVM_raw_write;
+
+  bool res = NVM_LoadIhexStream(app, &raw_stream, address, len);
+
+  return res;
+}
+
+bool NVM_file_write(void* ud, const void *ptr, int32_t len) {
+  return fwrite(ptr, (size_t)len, 1, (FILE*)ud) > 0;
 }
 
 /** \brief Save file to Intel HEX format
@@ -333,37 +442,24 @@ bool NVM_LoadIhex(UPDI_APP * app, char *filename, uint16_t address, uint16_t len
  * \return true if succeed
  *
  */
-bool NVM_SaveIhex(UPDI_APP * app, char *filename, uint16_t address, uint16_t len)
+bool NVM_SaveIhexFile(UPDI_APP * app, char *filename, uint16_t address, uint16_t len)
 {
-  uint8_t *fdata;
   FILE *fp;
   bool res = false;
 
-  fdata = malloc(len);
-  if (!fdata)
-  {
-    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Unable to allocate %d bytes", (int)len);
-    return false;
-  }
-  memset(fdata, 0xff, len);
   if ((fp = fopen(filename, "w")) == NULL)
   {
     LOG_Print(app->logger, LOG_LEVEL_ERROR, "Unable to open file: %s", filename);
   } else
   {
-    if (NVM_ReadFlash(app, address, fdata, len) == false)
-    {
-      LOG_Print(app->logger, LOG_LEVEL_ERROR, "Reading from device failed");
-    } else
-    {
-      if (IHEX_WriteFile(fp, fdata, len) == IHEX_ERROR_NONE)
-        res = true;
-      else
-        LOG_Print(app->logger, LOG_LEVEL_ERROR, "Problem writing Hex file");
-    }
+    IHEX_Stream file_stream;
+    file_stream.ud = (void*)fp;
+    file_stream.write = &NVM_file_write;
+
+    res = NVM_SaveIhexStream(app, &file_stream, address, len);
+
     fclose(fp);
   }
-  free(fdata);
 
   return res;
 }

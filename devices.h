@@ -25,7 +25,7 @@ typedef struct
 
 extern tDevice DEVICES_List[];
 
-int8_t DEVICES_GetId(char *name);
+int8_t DEVICES_GetId(const char *name);
 uint16_t DEVICES_GetFlashLength(int8_t id);
 uint16_t DEVICES_GetFlashStart(int8_t id);
 uint16_t DEVICES_GetPageSize(int8_t id);

@@ -34,10 +34,8 @@ bool PHY_DoBreak(UPDI_COM_port ** port)
 
   LOG_Print_GLOBAL(LOG_LEVEL_INFO, "Sending double break");
 
-  int len = strlen((*port)->port);
-  char * portname = (char*)malloc(len+1);
-  memcpy(portname, (*port)->port, len);
-  portname[len] = 0;
+  char portname[COMPORT_LEN];
+  memcpy(&(portname[0]), &((*port)->port[0]), COMPORT_LEN);
 
   COM_Close(port);
 
@@ -45,11 +43,9 @@ bool PHY_DoBreak(UPDI_COM_port ** port)
   // At 300 bauds, the break character will pull the line low for 30ms
   // Which is slightly above the recommended 24.6ms
   // no parity, one stop bit
-  if ((*port = COM_Open(portname, 300, false, false)) != NULL) {
-    free(portname);
+  if ((*port = COM_Open(portname, 300, false, false)) != NULL)
     return false;
-  }
-  free(portname);
+
   // Send two break characters, with 1 stop bit in between
   COM_Write(*port, buf, sizeof(buf));
   // Wait for the double break end

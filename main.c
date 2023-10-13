@@ -78,6 +78,22 @@ void help(void)
   printf("\n");
 }
 
+void onLOG(void *, int32_t level, const char * src, const char * msg) {
+    switch (level) {
+        case LOG_LEVEL_INFO:
+          printf("INFO: ");
+          break;
+        case LOG_LEVEL_WARNING:
+          printf("WARNING: ");
+          break;
+        case LOG_LEVEL_ERROR:
+          printf("ERROR: ");
+          break;
+    }
+    puts(msg);
+    printf("\n");
+}
+
 /** \brief Main application function
  *
  * \param [in] argc Number of command line arguments
@@ -275,9 +291,12 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  UPDI_APP * app = APP_Init();
+  UPDI_APP * app = APP_Init(NULL);
 
   if (!app) return -2;
+
+  app->DEVICE_Id = parameters.device;
+  app->logger->onlog = &onLOG;
 
   if (LINK_Init(app, parameters.port, parameters.baudrate, false) == false)
   {
@@ -300,6 +319,7 @@ int main(int argc, char* argv[])
   if (NVM_EnterProgmode(app) == false)
   {
     printf("Can't enter programming mode, exiting\n");
+    APP_Done(app);
     return -1;
   }
 
@@ -340,7 +360,7 @@ int main(int argc, char* argv[])
   if (parameters.write == true)
   {
     printf("Writing from file: %s\n", parameters.wr_file);
-    NVM_LoadIhex(app, parameters.wr_file, DEVICES_GetFlashStart(app->DEVICE_Id), DEVICES_GetFlashLength(app->DEVICE_Id));
+    NVM_LoadIhexFile(app, parameters.wr_file, DEVICES_GetFlashStart(app->DEVICE_Id), DEVICES_GetFlashLength(app->DEVICE_Id));
   }
   if (parameters.read == true)
   {
@@ -361,7 +381,7 @@ int main(int argc, char* argv[])
       ch = 0;
     }
     printf("Reading to file: %s%c%s\n", cwd, ch, parameters.rd_file);
-    NVM_SaveIhex(app, parameters.rd_file, DEVICES_GetFlashStart(app->DEVICE_Id), DEVICES_GetFlashLength(app->DEVICE_Id));
+    NVM_SaveIhexFile(app, parameters.rd_file, DEVICES_GetFlashStart(app->DEVICE_Id), DEVICES_GetFlashLength(app->DEVICE_Id));
   }
   if (parameters.lock == true)
   {

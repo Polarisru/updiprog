@@ -167,7 +167,7 @@ tDevice DEVICES_List[] =
  * \return index of the found device or -1 as error
  *
  */
-int8_t DEVICES_GetId(char *name)
+int8_t DEVICES_GetId(const char *name)
 {
   uint8_t i;
 

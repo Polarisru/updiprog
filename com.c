@@ -19,22 +19,17 @@
  */
 UPDI_COM_port* COM_Open(char *port, uint32_t baudrate, bool have_parity, bool two_stopbits)
 {
+  int port_len = strlen(port);
+  if ((port_len <= 1) || (port_len >= COMPORT_LEN)) return NULL;
+
   UPDI_COM_port * res = (UPDI_COM_port *)malloc(sizeof(UPDI_COM_port));
 
   if (!res) return NULL;
 
-  LOG_Print_GLOBAL(LOG_LEVEL_INFO, "Opening %s at %u baud\n", port, baudrate);
+  LOG_Print_GLOBAL(LOG_LEVEL_INFO, "Opening %s at %u baud", port, baudrate);
 
-  int len = strlen(port);
-  res->port = (char *)malloc(len+1);
-
-  if (!res->port) {
-    free(res);
-    return NULL;
-  }
-
-  memcpy(res->port, port, len);
-  res->port[len] = 0;
+  memcpy(&(res->port[0]), port, port_len);
+  res->port[port_len] = 0;
 
   res->COM_Baudrate = baudrate;
   #ifdef __MINGW32__
@@ -247,7 +242,7 @@ void COM_Close(UPDI_COM_port** port)
   if (!port) return;
   if (!(*port)) return;
 
-  LOG_Print_GLOBAL(LOG_LEVEL_INFO, "Closing COM port %s\n", (*port)->port);
+  LOG_Print_GLOBAL(LOG_LEVEL_INFO, "Closing COM port %s", (*port)->port);
   #ifdef __MINGW32__
   CloseHandle(port->hSerial);
   #endif
@@ -255,7 +250,6 @@ void COM_Close(UPDI_COM_port** port)
   close((*port)->fd);
   #endif
 
-  free((*port)->port);
   free(*port);
   *port = NULL;
 }

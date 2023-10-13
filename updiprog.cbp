@@ -33,6 +33,7 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-D__linux" />
 		</Compiler>
 		<Unit filename="app.c">
 			<Option compilerVar="CC" />

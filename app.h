@@ -14,7 +14,7 @@ typedef struct {
   int8_t DEVICE_Id;
 } UPDI_APP;
 
-UPDI_APP * APP_Init();
+UPDI_APP * APP_Init(UPDI_logger * logger);
 bool APP_EnterProgmode(UPDI_APP *);
 void APP_LeaveProgmode(UPDI_APP *);
 bool APP_WaitFlashReady(UPDI_APP *);

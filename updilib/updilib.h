@@ -4,25 +4,22 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define FILENAME_LEN    (64)
-#define COMPORT_LEN     (32)
-#define FUSES_LEN       (128)
+#include "../com.h"
+#include "../log.h"
 
-typedef UPDI_bool int8_t;
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+typedef int8_t UPDI_bool;
 
 typedef struct
 {
-  UPDI_bool erase;
-  UPDI_bool write;
-  UPDI_bool read;
-  UPDI_bool wr_fuses;
-  UPDI_bool rd_fuses;
-  UPDI_bool lock;
-  UPDI_bool unlock;
-  UPDI_bool show_info;
-  uint32_t  baudrate;
-  int8_t    device;
-  char      port[COMPORT_LEN];
+  uint32_t     baudrate;
+  int8_t       device;
+  char         port[COMPORT_LEN];
+  UPDI_logger* logger;
 } UPDI_Params;
 
 typedef struct
@@ -31,17 +28,32 @@ typedef struct
   uint8_t value;
 } UPDI_fuse;
 
+UPDI_logger * UPDILIB_logger_init(const char *, int32_t, UPDI_onlog, UPDI_onlogfree, void *);
+void UPDILIB_logger_done(UPDI_logger *);
+
 UPDI_Params * UPDILIB_cfg_init();
+void UPDILIB_cfg_done(UPDI_Params *);
+
+UPDI_bool UPDILIB_cfg_set_logger(UPDI_Params *, UPDI_logger *);
+UPDI_bool UPDILIB_cfg_set_buadrate(UPDI_Params *, uint32_t);
 UPDI_bool UPDILIB_cfg_set_com(UPDI_Params *, const char *);
 UPDI_bool UPDILIB_cfg_set_device(UPDI_Params *, const char *);
 
-UPDI_bool UPDILIB_device_get_name(UPDI_Params *, char *, int32_t);
+int32_t   UPDILIB_devices_get_count();
+UPDI_bool UPDILIB_devices_get_name(int8_t, char *, int32_t *);
+
+UPDI_bool UPDILIB_erase(UPDI_Params *);
 
 UPDI_bool UPDILIB_write_fuses(UPDI_Params *, const UPDI_fuse *, int32_t);
 UPDI_bool UPDILIB_read_fuses(UPDI_Params *, UPDI_fuse *, int32_t *);
 
 UPDI_bool UPDILIB_write_hex(UPDI_Params *, const char *, int32_t);
 UPDI_bool UPDILIB_read_hex(UPDI_Params *, char *, int32_t *);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 
 #endif // UPDILIB_H

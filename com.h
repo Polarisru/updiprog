@@ -14,6 +14,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define COMPORT_LEN     (32)
+
 typedef struct {
 #ifdef __MINGW32__
  HANDLE hSerial;
@@ -22,7 +24,7 @@ typedef struct {
  int fd;
 #endif
  uint32_t COM_Baudrate;
- char * port;
+ char port [COMPORT_LEN];
 } UPDI_COM_port;
 
 UPDI_COM_port* COM_Open(char *port, uint32_t baudrate, bool have_parity, bool two_stopbits);

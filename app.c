@@ -8,21 +8,15 @@
 #include "sleep.h"
 #include "updi.h"
 
-UPDI_APP * APP_Init() {
+UPDI_APP * APP_Init(UPDI_logger * logger) {
     UPDI_APP * res = (UPDI_APP *)malloc(sizeof(UPDI_APP));
     if (res) {
         memset(res, 0, sizeof(UPDI_APP));
 
-        #ifdef string_logger
-        res->logger = (UPDI_logger *)str_log_init();
-        if (!res->logger) {
-            free(res);
-            return NULL;
-        }
-        #else
-        res->logger = global_LOG();
-        #endif
-
+        if (logger)
+          res->logger = logger;
+        else
+          res->logger = global_LOG();
         res->DEVICE_Id = DEVICE_UNKNOWN_ID;
 
         return res;
@@ -32,9 +26,6 @@ UPDI_APP * APP_Init() {
 
 void APP_Done(UPDI_APP * app) {
     if (app) {
-        #ifdef string_logger
-        str_log_done((str_log*)app->logger);
-        #endif
         if (app->port) COM_Close(&(app->port));
         free(app);
     }

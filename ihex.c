@@ -31,22 +31,22 @@ static char* IHEX_AddByte(uint8_t byte)
  * \return true if succeed
  *
  */
-bool IHEX_WriteEnd(FILE *fp)
+bool IHEX_WriteEnd(IHEX_Stream *fp)
 {
-  fwrite(IHEX_ENDFILE, strlen(IHEX_ENDFILE), 1, fp);
-  fwrite(IHEX_NEWLINE, strlen(IHEX_NEWLINE), 1, fp);
+  fp->write(fp->ud, IHEX_ENDFILE, strlen(IHEX_ENDFILE));
+  fp->write(fp->ud, IHEX_NEWLINE, strlen(IHEX_NEWLINE));
   return true;
 }
 
-/** \brief Write data buffer to HEX file
+/** \brief Write data buffer to HEX stream
  *
- * \param [in] fp File handle
+ * \param [in] fp Stream handle
  * \param [in] data Data buffer to write
  * \param [in] len Length of data buffer
  * \return error code as uint8_t
  *
  */
-uint8_t IHEX_WriteFile(FILE *fp, uint8_t *data, uint16_t len)
+uint8_t IHEX_WriteStream(IHEX_Stream *fp, uint8_t *data, uint16_t len)
 {
   uint16_t i;
   uint8_t x;
@@ -75,7 +75,7 @@ uint8_t IHEX_WriteFile(FILE *fp, uint8_t *data, uint16_t len)
     crc = (uint8_t)(0x100 - crc);
     strcat(str, IHEX_AddByte(crc));
     strcat(str, IHEX_NEWLINE);
-    fwrite(str, strlen(str), 1, fp);
+    fp->write(fp->ud, str, strlen(str));
     crc = 0;
   }
   IHEX_WriteEnd(fp);
@@ -124,7 +124,7 @@ uint8_t IHEX_GetByte(char *data)
  * \return error code as uint8_t
  *
  */
-uint8_t IHEX_ReadFile(FILE *fp, uint8_t *data, uint16_t maxlen,
+uint8_t IHEX_ReadStream(IHEX_Stream *fp, uint8_t *data, uint16_t maxlen,
                       uint16_t *min_addr, uint16_t *max_addr)
 {
   uint16_t addr;
@@ -138,9 +138,9 @@ uint8_t IHEX_ReadFile(FILE *fp, uint8_t *data, uint16_t maxlen,
 
   addr = 0;
   segment = 0;
-  while (!feof(fp))
+  while (!(fp->eof(fp->ud)))
   {
-    if (fgets(str, sizeof(str), fp) == NULL)
+    if (!fp->gets(fp->ud, str, sizeof(str)))
       return IHEX_ERROR_FILE;
     // trim whitespace on the right
     end = str + strlen(str) - 1;
