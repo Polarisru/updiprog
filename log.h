@@ -14,10 +14,11 @@ typedef void (*UPDI_onlog) (void*, int32_t, const char *, const char *);
 typedef void (*UPDI_onlogfree) (void*);
 
 enum {
-  LOG_LEVEL_INFO = 0,
-  LOG_LEVEL_WARNING = 1,
-  LOG_LEVEL_ERROR = 2,
-  LOG_LEVEL_LAST = 3
+  LOG_LEVEL_VERBOSE = 0,
+  LOG_LEVEL_INFO    = 1,
+  LOG_LEVEL_WARNING = 2,
+  LOG_LEVEL_ERROR   = 3,
+  LOG_LEVEL_LAST    = 4
 };
 
 typedef struct {

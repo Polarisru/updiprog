@@ -32,7 +32,6 @@ bool NVM_GetDeviceInfo(UPDI_APP * app)
  */
 bool NVM_EnterProgmode(UPDI_APP * app)
 {
-  LOG_Print(app->logger, LOG_LEVEL_INFO, "Entering NVM programming mode");
   app->NVM_Progmode = APP_EnterProgmode(app);
   return app->NVM_Progmode;
 }
@@ -44,7 +43,6 @@ bool NVM_EnterProgmode(UPDI_APP * app)
  */
 void NVM_LeaveProgmode(UPDI_APP * app)
 {
-  LOG_Print(app->logger, LOG_LEVEL_INFO, "Leaving NVM programming mode");
   APP_LeaveProgmode(app);
   app->NVM_Progmode = false;
 }
@@ -125,7 +123,7 @@ bool NVM_ReadFlash(UPDI_APP * app, uint16_t address, uint8_t *data, uint16_t siz
   // Read out page-wise for convenience
   while (i < pages)
   {
-    LOG_Print(app->logger,LOG_LEVEL_INFO, "Reading page at 0x%04X", address);
+    LOG_Print(app->logger,LOG_LEVEL_VERBOSE, "Reading page at 0x%04X", address);
     if (APP_ReadDataWords(app, address, &data[i * page_size], DEVICES_GetPageSize(app->DEVICE_Id) >> 1) == false)
     {
       // error occurred, try once more
@@ -185,7 +183,7 @@ bool NVM_WriteFlash(UPDI_APP * app, uint16_t address, uint8_t *data, uint16_t si
   // Program each page
   while (i < pages)
   {
-    LOG_Print(app->logger, LOG_LEVEL_INFO, "Writing page at 0x%04X", address);
+    LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "Writing page at 0x%04X", address);
     if (APP_WriteNvm(app, address, &data[i * page_size], page_size, true) == false)
     {
       err_counter++;

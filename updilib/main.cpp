@@ -41,6 +41,10 @@ DLL_EXPORT void UPDILIB_set_glb_logger_onlog(UPDI_onlog _onlog, void * _ud) {
     global_LOG()->userdata = _ud;
 }
 
+DLL_EXPORT void UPDILIB_set_glb_logger_level(int32_t _level) {
+    global_LOG()->LOG_Level = _level;
+}
+
 DLL_EXPORT UPDI_bool UPDILIB_cfg_set_buadrate(UPDI_Params * cfg, uint32_t val) {
     if (cfg) {
         cfg->baudrate = val;
@@ -246,7 +250,7 @@ DLL_EXPORT UPDI_bool UPDILIB_read_hex(UPDI_Params * _cfg, char * _data, int32_t 
 
   UPDI_APP * app = intern_link_to_app(_cfg);
   if (app) {
-    LOG_Print(app->logger, LOG_LEVEL_INFO, "Writing from hex data");
+    LOG_Print(app->logger, LOG_LEVEL_INFO, "Reading flash to hex data");
 
     NVM_raw_data data;
     data.data = _data;

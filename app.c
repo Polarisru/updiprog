@@ -41,11 +41,11 @@ void APP_Reset(UPDI_APP * app, bool apply_reset)
   //Applies or releases an UPDI reset condition
   if (apply_reset == true)
   {
-    LOG_Print(app->logger, LOG_LEVEL_INFO, "Apply reset");
+    LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "Apply reset");
     LINK_stcs(app, UPDI_ASI_RESET_REQ, UPDI_RESET_REQ_VALUE);
   } else
   {
-    LOG_Print(app->logger, LOG_LEVEL_INFO, "Release reset");
+    LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "Release reset");
     LINK_stcs(app, UPDI_ASI_RESET_REQ, 0x00);
   }
 }
@@ -87,14 +87,14 @@ bool APP_EnterProgmode(UPDI_APP * app)
     return true;
   }
 
-  LOG_Print(app->logger, LOG_LEVEL_WARNING, "Entering NVM programming mode");
+  LOG_Print(app->logger, LOG_LEVEL_INFO, "Entering NVM programming mode");
 
   // Put in the key
   LINK_SendKey(app, UPDI_KEY_NVM, UPDI_KEY_64);
 
   // Check key status
   key_status = LINK_ldcs(app, UPDI_ASI_KEY_STATUS);
-  LOG_Print(app->logger, LOG_LEVEL_INFO, "Key status = 0x%02X", key_status);
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "Key status = 0x%02X", key_status);
 
   if (!(key_status & (1 << UPDI_ASI_KEY_STATUS_NVMPROG)))
   {
@@ -127,7 +127,7 @@ bool APP_EnterProgmode(UPDI_APP * app)
 void APP_LeaveProgmode(UPDI_APP * app)
 {
   //Disables UPDI which releases any keys enabled
-  LOG_Print(app->logger, LOG_LEVEL_WARNING, "Leaving NVM programming mode");
+  LOG_Print(app->logger, LOG_LEVEL_INFO, "Leaving NVM programming mode");
   APP_Reset(app, true);
   APP_Reset(app, false);
   LINK_stcs(app, UPDI_CS_CTRLB, (1 << UPDI_CTRLB_UPDIDIS_BIT) | (1 << UPDI_CTRLB_CCDETDIS_BIT));
@@ -143,7 +143,7 @@ bool APP_Unlock(UPDI_APP * app)
 
   // Check key status
   key_status = LINK_ldcs(app, UPDI_ASI_KEY_STATUS);
-  LOG_Print(app->logger, LOG_LEVEL_INFO, "Key status = 0x%02X", key_status);
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "Key status = 0x%02X", key_status);
 
   if (!(key_status & (1 << UPDI_ASI_KEY_STATUS_CHIPERASE)))
   {
@@ -171,7 +171,7 @@ bool APP_WaitFlashReady(UPDI_APP * app)
   uint8_t status;
   uint16_t timeout = 10000; // 10 sec timeout, just to be sure
 
-  LOG_Print(app->logger, LOG_LEVEL_INFO, "Wait flash ready");
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "Wait flash ready");
   while (timeout-- > 0)
   {
     msleep(1);
@@ -195,7 +195,7 @@ bool APP_ExecuteNvmCommand(UPDI_APP * app, uint8_t command)
 {
   //Executes an NVM COMMAND on the NVM CTRL
   //self.logger.info("NVMCMD {:d} executing".format(command))
-  LOG_Print(app->logger, LOG_LEVEL_INFO, "NVMCMD %d executing", command);
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "NVMCMD %d executing", command);
   return LINK_st(app, DEVICES_GetNvmctrlAddress(app->DEVICE_Id) + UPDI_NVMCTRL_CTRLA, command);
 }
 

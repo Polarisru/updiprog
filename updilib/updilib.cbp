@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option host_application="/home/ilya/projects/kicad/updiprog/updigui/updigui" />
+				<Option host_application="$(PROJECTDIR)../updigui/updigui" />
 				<Option run_host_application_in_terminal="0" />
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
@@ -89,6 +89,10 @@
 		<Unit filename="../updi.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="updilib.h" />
-		<Extensions />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

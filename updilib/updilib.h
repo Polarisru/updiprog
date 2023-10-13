@@ -49,6 +49,7 @@ DLL_EXPORT UPDI_logger * UPDILIB_logger_init(const char *, int32_t, UPDI_onlog, 
 DLL_EXPORT void UPDILIB_logger_done(UPDI_logger *);
 
 DLL_EXPORT void UPDILIB_set_glb_logger_onlog(UPDI_onlog, void *);
+DLL_EXPORT void UPDILIB_set_glb_logger_level(int32_t);
 
 DLL_EXPORT UPDI_Params * UPDILIB_cfg_init();
 DLL_EXPORT void UPDILIB_cfg_done(UPDI_Params *);

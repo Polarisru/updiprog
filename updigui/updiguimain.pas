@@ -38,6 +38,7 @@ type
     procedure Button1Click(Sender: TObject);
     procedure ComboBox1Change(Sender: TObject);
     procedure ComboBox1Select(Sender: TObject);
+    procedure ComboBox2Change(Sender : TObject);
     procedure ComboBox2Select(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -208,6 +209,7 @@ begin
   if InitUPDILibInterface('') then
   begin
     UPDILIB_set_glb_logger_onlog(@log_onlog, Self);
+    UPDILIB_set_glb_logger_level(LOG_LEVEL_INFO);
 
     loclogger := UPDILIB_logger_init(pansichar('gui'), LOG_LEVEL_INFO,
                                                        @log_onlog,
@@ -217,11 +219,7 @@ begin
     SetLength(dst, COMPORT_LEN);
     cfg := UPDILIB_cfg_init();
     if Assigned(cfg) then
-    begin
       UPDILIB_cfg_set_logger(cfg, loclogger);
-      dst := 'dev/tty';
-      UPDILIB_cfg_set_com(cfg, PChar(dst));
-    end;
 
     SetLength(dst, DEVICES_NAME_LEN);
     c := UPDILIB_devices_get_count();
@@ -290,9 +288,23 @@ begin
   ComboBox1Change(Sender);
 end;
 
+procedure TForm1.ComboBox2Change(Sender : TObject);
+var
+  p : AnsiString;
+begin
+  if IsUPDILibloaded then
+  begin
+    if Assigned(cfg) and (ComboBox2.ItemIndex >= 0) then
+    begin
+      p := ComboBox2.Items[ComboBox2.ItemIndex];
+      UPDILIB_cfg_set_com(cfg, PChar(p));
+    end;
+  end;
+end;
+
 procedure TForm1.ComboBox2Select(Sender: TObject);
 begin
-
+  ComboBox2Change(Sender);
 end;
 
 procedure TForm1.LogOut(const Str: String);

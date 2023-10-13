@@ -20,6 +20,7 @@ UPDI_logger * UPDI_logger_init(const char * _src, int32_t _level, UPDI_onlog _on
         res->onlog = _onlog;
         res->onfree = _onfree;
         res->userdata = ud;
+        return res;
      }
      return NULL;
 }

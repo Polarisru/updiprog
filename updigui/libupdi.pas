@@ -36,10 +36,11 @@ const
   DEVICES_NAME_LEN       = 16;
   LOG_SRCNAME_LEN        = 8;
 
-  LOG_LEVEL_INFO         = 0;
-  LOG_LEVEL_WARNING      = 1;
-  LOG_LEVEL_ERROR        = 2;
-  LOG_LEVEL_LAST         = 3;
+  LOG_LEVEL_VERBOSE      = 0;
+  LOG_LEVEL_INFO         = 1;
+  LOG_LEVEL_WARNING      = 2;
+  LOG_LEVEL_ERROR        = 3;
+  LOG_LEVEL_LAST         = 4;
 
 type
   UPDI_bool = Byte;
@@ -66,6 +67,7 @@ function UPDILIB_logger_init(const src : pansichar;
 procedure UPDILIB_logger_done(logger : pUPDI_logger);
 
 procedure UPDILIB_set_glb_logger_onlog(onlog: UPDI_onlog; ud : Pointer);
+procedure UPDILIB_set_glb_logger_level(level : int32);
 
 function UPDILIB_cfg_init() : pUPDI_Params;
 procedure UPDILIB_cfg_done(cfg: pUPDI_Params);
@@ -117,6 +119,7 @@ type
    p_UPDILIB_logger_done = procedure (logger : pUPDI_logger) cdecl;
    p_UPDILIB_set_glb_logger_onlog = procedure(onlog: UPDI_onlog;
                              ud : Pointer) cdecl;
+   p_UPDILIB_set_glb_logger_level = procedure (level : int32) cdecl;
 
    p_UPDILIB_cfg_init = function () : pUPDI_Params cdecl;
    p_UPDILIB_cfg_done = procedure (cfg: pUPDI_Params) cdecl;
@@ -152,6 +155,7 @@ var
   _UPDILIB_logger_init       : p_UPDILIB_logger_init       = nil;
   _UPDILIB_logger_done       : p_UPDILIB_logger_done       = nil;
   _UPDILIB_set_glb_logger_onlog : p_UPDILIB_set_glb_logger_onlog = nil;
+  _UPDILIB_set_glb_logger_level : p_UPDILIB_set_glb_logger_level = nil;
   _UPDILIB_cfg_init          : p_UPDILIB_cfg_init          = nil;
   _UPDILIB_cfg_done          : p_UPDILIB_cfg_done          = nil;
   _UPDILIB_cfg_set_logger    : p_UPDILIB_cfg_set_logger    = nil;
@@ -185,6 +189,12 @@ procedure UPDILIB_set_glb_logger_onlog(onlog: UPDI_onlog; ud: Pointer);
 begin
   if Assigned(_UPDILIB_set_glb_logger_onlog) then
     _UPDILIB_set_glb_logger_onlog(onlog, ud);
+end;
+
+procedure UPDILIB_set_glb_logger_level(level : int32);
+begin
+  if Assigned(_UPDILIB_set_glb_logger_level) then
+    _UPDILIB_set_glb_logger_level(level);
 end;
 
 function UPDILIB_cfg_init: pUPDI_Params;
@@ -336,6 +346,7 @@ begin
   _UPDILIB_logger_init := p_UPDILIB_logger_init(GetProcAddr(LUPDILib, 'UPDILIB_logger_init'));
   _UPDILIB_logger_done := p_UPDILIB_logger_done(GetProcAddr(LUPDILib, 'UPDILIB_logger_done'));
   _UPDILIB_set_glb_logger_onlog := p_UPDILIB_set_glb_logger_onlog(GetProcAddr(LUPDILib, 'UPDILIB_set_glb_logger_onlog'));
+  _UPDILIB_set_glb_logger_level := p_UPDILIB_set_glb_logger_level(GetProcAddr(LUPDILib, 'UPDILIB_set_glb_logger_level'));
   _UPDILIB_cfg_init := p_UPDILIB_cfg_init(GetProcAddr(LUPDILib, 'UPDILIB_cfg_init'));
   _UPDILIB_cfg_done := p_UPDILIB_cfg_done(GetProcAddr(LUPDILib, 'UPDILIB_cfg_done'));
   _UPDILIB_cfg_set_logger := p_UPDILIB_cfg_set_logger(GetProcAddr(LUPDILib, 'UPDILIB_cfg_set_logger'));
@@ -356,6 +367,7 @@ begin
   _UPDILIB_logger_init := nil;
   _UPDILIB_logger_done := nil;
   _UPDILIB_set_glb_logger_onlog := nil;
+  _UPDILIB_set_glb_logger_level := nil;
   _UPDILIB_cfg_init := nil;
   _UPDILIB_cfg_done := nil;
   _UPDILIB_cfg_set_logger := nil;
