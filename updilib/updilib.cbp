@@ -7,20 +7,24 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/libupdilib" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Debug/updilib" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
+				<Option host_application="/home/ilya/projects/kicad/updiprog/updigui/updigui" />
+				<Option run_host_application_in_terminal="0" />
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-D__linux" />
-					<Add option="-Dstring_logger" />
 				</Compiler>
+				<ExtraCommands>
+					<Add after="cp -rf $(PROJECTDIR)$(TARGET_OUTPUT_DIR)lib$(PROJECT_NAME).so  $(PROJECTDIR)" />
+				</ExtraCommands>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/libupdilib" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Release/updilib" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
@@ -29,7 +33,6 @@
 				<Compiler>
 					<Add option="-O2" />
 					<Add option="-D__linux" />
-					<Add option="-Dstring_logger" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -41,6 +44,7 @@
 			<Add option="-fPIC" />
 			<Add option="-fexceptions" />
 			<Add option="-DBUILD_DLL" />
+			<Add option="-Dstring_logger" />
 		</Compiler>
 		<Unit filename="../app.c">
 			<Option compilerVar="CC" />
