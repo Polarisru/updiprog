@@ -8,6 +8,11 @@
 
 #define NVM_MAX_ERRORS    (3)
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct NVM_raw_data_t {
     char * data;
     int32_t len;
@@ -24,5 +29,9 @@ bool NVM_LoadIhexFile(UPDI_APP *,char *filename, uint16_t address, uint16_t len)
 bool NVM_LoadIhexRaw(UPDI_APP *, NVM_raw_data *src, uint16_t address, uint16_t len);
 bool NVM_SaveIhexFile(UPDI_APP *,char *filename, uint16_t address, uint16_t len);
 bool NVM_SaveIhexRaw(UPDI_APP *,NVM_raw_data *dst, uint16_t address, uint16_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

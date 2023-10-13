@@ -8,10 +8,19 @@
 
 #define PHY_BAUDRATE      (115200)
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 UPDI_COM_port * PHY_Init(char *port, uint32_t baudrate, bool onDTR);
 bool PHY_DoBreak(UPDI_COM_port **);
 bool PHY_Send(UPDI_COM_port *, uint8_t *data, uint8_t len);
 bool PHY_Receive(UPDI_COM_port *, uint8_t *data, uint16_t len);
 void PHY_Close(UPDI_COM_port **);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

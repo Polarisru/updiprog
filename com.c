@@ -8,6 +8,11 @@
 #include "com.h"
 #include "log.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /** \brief Open COM port with settings
  *
  * \param [in] port Port name as string
@@ -253,3 +258,7 @@ void COM_Close(UPDI_COM_port** port)
   free(*port);
   *port = NULL;
 }
+
+#ifdef __cplusplus
+}
+#endif

@@ -6,6 +6,11 @@
 #include "updi.h"
 #include "sleep.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /** \brief Initialize physical interface
  *
  * \param [in] port Port name as string
@@ -108,3 +113,7 @@ void PHY_Close(UPDI_COM_port ** port)
 {
   COM_Close(port);
 }
+
+#ifdef __cplusplus
+}
+#endif

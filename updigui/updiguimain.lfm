@@ -1,0 +1,71 @@
+object Form1: TForm1
+  Left = 388
+  Height = 452
+  Top = 478
+  Width = 513
+  BorderStyle = bsDialog
+  Caption = 'UPDI GUI'
+  ClientHeight = 452
+  ClientWidth = 513
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  LCLVersion = '2.2.6.0'
+  object Button1: TButton
+    Left = 408
+    Height = 41
+    Top = 32
+    Width = 83
+    Caption = 'Test'
+    OnClick = Button1Click
+    TabOrder = 0
+  end
+  object ComboBox1: TComboBox
+    Left = 32
+    Height = 33
+    Top = 40
+    Width = 168
+    ItemHeight = 0
+    OnChange = ComboBox1Change
+    OnSelect = ComboBox1Select
+    Style = csDropDownList
+    TabOrder = 1
+  end
+  object Label1: TLabel
+    Left = 32
+    Height = 17
+    Top = 16
+    Width = 84
+    Caption = 'Device name'
+    ParentColor = False
+  end
+  object Label2: TLabel
+    Left = 216
+    Height = 17
+    Top = 16
+    Width = 30
+    Caption = 'Port'
+    ParentColor = False
+  end
+  object ComboBox2: TComboBox
+    Left = 216
+    Height = 33
+    Top = 40
+    Width = 168
+    ItemHeight = 0
+    OnSelect = ComboBox2Select
+    Style = csDropDownList
+    TabOrder = 2
+  end
+  object Log: TMemo
+    Left = 12
+    Height = 352
+    Top = 88
+    Width = 489
+    Align = alBottom
+    BorderSpacing.Around = 12
+    Font.Name = 'Monospace'
+    ParentFont = False
+    ScrollBars = ssAutoBoth
+    TabOrder = 3
+  end
+end

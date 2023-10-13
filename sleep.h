@@ -11,6 +11,13 @@
 #include <unistd.h>
 #endif // __linux
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 void msleep(uint32_t usec);
+#ifdef __cplusplus
+}
+#endif
 
 #endif

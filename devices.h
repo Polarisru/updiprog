@@ -9,6 +9,11 @@
 
 #define DEVICE_LOCKBIT_ADDR (0x0A)
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct
 {
   char     name[DEVICES_NAME_LEN];
@@ -34,5 +39,9 @@ uint16_t DEVICES_GetFusesAddress(int8_t id);
 uint8_t DEVICES_GetFusesNumber(int8_t id);
 uint8_t DEVICES_GetNumber(void);
 char *DEVICES_GetNameByNumber(uint8_t number);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DEVICES_H

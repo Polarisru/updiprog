@@ -9,6 +9,11 @@
 #include "progress.h"
 #include "updi.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /** \brief Read info about current device
  *
  * \return
@@ -463,3 +468,7 @@ bool NVM_SaveIhexFile(UPDI_APP * app, char *filename, uint16_t address, uint16_t
 
   return res;
 }
+
+#ifdef __cplusplus
+}
+#endif

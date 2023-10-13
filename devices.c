@@ -1,6 +1,11 @@
 #include <string.h>
 #include "devices.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 tDevice DEVICES_List[] =
 {
   {
@@ -281,3 +286,7 @@ char *DEVICES_GetNameByNumber(uint8_t number)
     number = 0;
   return DEVICES_List[number].name;
 }
+
+#ifdef __cplusplus
+}
+#endif

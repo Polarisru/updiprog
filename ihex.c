@@ -3,6 +3,11 @@
 #include <string.h>
 #include "ihex.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 static uint8_t crc;
 
 /** \brief Convert byte to string with HEX representation
@@ -190,3 +195,7 @@ uint8_t IHEX_ReadStream(IHEX_Stream *fp, uint8_t *data, uint16_t maxlen,
 
   return IHEX_ERROR_NONE;
 }
+
+#ifdef __cplusplus
+}
+#endif

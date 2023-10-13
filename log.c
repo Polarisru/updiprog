@@ -4,6 +4,11 @@
 #include <stdarg.h>
 #include "log.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 static UPDI_logger global_log_obj = { LOG_LEVEL_ERROR, "glb", NULL, NULL, NULL };
 
 UPDI_logger * UPDI_logger_init(const char * _src, int32_t _level, UPDI_onlog _onlog, UPDI_onlogfree _onfree, void* ud) {
@@ -71,3 +76,7 @@ void LOG_SetLevel(UPDI_logger * logger, uint8_t level)
     return;
   logger->LOG_Level = level;
 }
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,5 +1,10 @@
 #include "sleep.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 void msleep(uint32_t msec)
 {
   #ifdef __MINGW32__
@@ -10,3 +15,6 @@ void msleep(uint32_t msec)
   #endif // __linux
 }
 
+#ifdef __cplusplus
+}
+#endif

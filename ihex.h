@@ -17,6 +17,11 @@
 #define IHEX_NEWLINE        "\n"
 #define IHEX_ENDFILE        ":00000001FF"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 enum {
   IHEX_DATA_RECORD,
   IHEX_END_OF_FILE_RECORD,
@@ -50,5 +55,9 @@ typedef struct IHEX_Stream_t {
 uint8_t IHEX_WriteStream(IHEX_Stream *fp, uint8_t *data, uint16_t len);
 uint8_t IHEX_ReadStream(IHEX_Stream *fp, uint8_t *data, uint16_t maxlen,
                         uint16_t *min_addr, uint16_t *max_addr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

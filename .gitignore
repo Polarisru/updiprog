@@ -10,3 +10,11 @@
 *.so
 *.lib
 *.depend
+*/*.dbg
+*/backup
+*/lib
+*/*.lps
+*/*.res
+*.layout
+*/*.layout
+updigui/updigui

@@ -2,6 +2,11 @@
 #include <string.h>
 #include "progress.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /** \brief Print progress bar with prefix
  *
  * \param [in] iteration Current iteration
@@ -50,3 +55,7 @@ void PROGRESS_Break(void)
   printf("\n");
   #endif
 }
+
+#ifdef __cplusplus
+}
+#endif

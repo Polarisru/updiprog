@@ -14,6 +14,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define COMPORT_LEN     (32)
 
 typedef struct {
@@ -33,5 +38,9 @@ int COM_Read(UPDI_COM_port*,uint8_t *data, uint16_t len);
 uint16_t COM_GetTransTime(UPDI_COM_port*,uint16_t len);
 void COM_WaitForTransmit(UPDI_COM_port*);
 void COM_Close(UPDI_COM_port**);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

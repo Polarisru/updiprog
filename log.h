@@ -5,14 +5,19 @@
 
 #define LOG_SRCNAME_LEN (8)
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef void (*UPDI_onlog) (void*, int32_t, const char *, const char *);
 typedef void (*UPDI_onlogfree) (void*);
 
 enum {
-  LOG_LEVEL_INFO,
-  LOG_LEVEL_WARNING,
-  LOG_LEVEL_ERROR,
-  LOG_LEVEL_LAST
+  LOG_LEVEL_INFO = 0,
+  LOG_LEVEL_WARNING = 1,
+  LOG_LEVEL_ERROR = 2,
+  LOG_LEVEL_LAST = 3
 };
 
 typedef struct {
@@ -31,5 +36,9 @@ UPDI_logger * UPDI_logger_init(const char *, int32_t, UPDI_onlog, UPDI_onlogfree
 void UPDI_logger_done(UPDI_logger *);
 
 #define LOG_Print_GLOBAL(...) LOG_Print(global_LOG(), __VA_ARGS__)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

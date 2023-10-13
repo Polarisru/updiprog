@@ -40,6 +40,7 @@
 			<Add option="-Wall" />
 			<Add option="-fPIC" />
 			<Add option="-fexceptions" />
+			<Add option="-DBUILD_DLL" />
 		</Compiler>
 		<Unit filename="../app.c">
 			<Option compilerVar="CC" />

@@ -4,6 +4,11 @@
 #include "phy.h"
 #include "updi.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /** \brief
  *
  * \param
@@ -378,3 +383,7 @@ bool LINK_SendKey(UPDI_APP* app, char *key, uint8_t size)
 
   return true;
 }
+
+#ifdef __cplusplus
+}
+#endif

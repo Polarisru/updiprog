@@ -8,6 +8,11 @@
 #include "sleep.h"
 #include "updi.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 UPDI_APP * APP_Init(UPDI_logger * logger) {
     UPDI_APP * res = (UPDI_APP *)malloc(sizeof(UPDI_APP));
     if (res) {
@@ -369,3 +374,7 @@ bool APP_ReadDataWords(UPDI_APP * app, uint16_t address, uint8_t *data, uint16_t
   // Do the read
   return LINK_ld_ptr_inc16(app, data, words);
 }
+
+#ifdef __cplusplus
+}
+#endif
