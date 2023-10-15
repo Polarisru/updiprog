@@ -257,7 +257,7 @@ DLL_EXPORT UPDI_bool UPDILIB_read_hex(UPDI_Params * _cfg, char * _data, int32_t 
     data.len = *_len;
     data.pos = 0;
     NVM_SaveIhexRaw(app, &data, DEVICES_GetFlashStart(app->DEVICE_Id), DEVICES_GetFlashLength(app->DEVICE_Id));
-    *_len = data.len;
+    *_len = data.pos;
     intern_unlink_app(app);
     return 1;
   }

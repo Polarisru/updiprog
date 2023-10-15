@@ -1,7 +1,7 @@
 object Form1: TForm1
-  Left = 388
+  Left = 425
   Height = 452
-  Top = 253
+  Top = 131
   Width = 513
   BorderStyle = bsDialog
   Caption = 'UPDI GUI'
@@ -10,63 +10,241 @@ object Form1: TForm1
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   LCLVersion = '2.2.6.0'
-  object Button1: TButton
-    Left = 408
-    Height = 41
-    Top = 32
-    Width = 83
-    Caption = 'Test'
-    OnClick = Button1Click
+  object DevicesComboBox: TComboBox
+    Left = 12
+    Height = 35
+    Top = 96
+    Width = 456
+    ItemHeight = 0
+    OnChange = DevicesComboBoxChange
+    OnSelect = DevicesComboBoxSelect
+    Style = csDropDownList
     TabOrder = 0
   end
-  object ComboBox1: TComboBox
-    Left = 32
-    Height = 35
-    Top = 40
-    Width = 168
-    ItemHeight = 0
-    OnChange = ComboBox1Change
-    OnSelect = ComboBox1Select
-    Style = csDropDownList
-    TabOrder = 1
-  end
   object Label1: TLabel
-    Left = 32
+    Left = 12
     Height = 19
-    Top = 16
+    Top = 72
     Width = 75
     Caption = 'Device name'
     ParentColor = False
   end
   object Label2: TLabel
-    Left = 216
+    Left = 12
     Height = 19
-    Top = 16
+    Top = 8
     Width = 26
     Caption = 'Port'
     ParentColor = False
   end
-  object ComboBox2: TComboBox
-    Left = 216
+  object PortComboBox: TComboBox
+    Left = 12
     Height = 35
-    Top = 40
-    Width = 168
+    Top = 32
+    Width = 456
     ItemHeight = 0
-    OnChange = ComboBox2Change
-    OnSelect = ComboBox2Select
+    OnChange = PortComboBoxChange
+    OnSelect = PortComboBoxSelect
     Style = csDropDownList
-    TabOrder = 2
+    TabOrder = 1
   end
   object Log: TMemo
     Left = 12
-    Height = 352
-    Top = 88
+    Height = 136
+    Top = 304
     Width = 489
     Align = alBottom
     BorderSpacing.Around = 12
     Font.Name = 'Monospace'
     ParentFont = False
     ScrollBars = ssAutoBoth
+    TabOrder = 2
+  end
+  object RefreshTTYButton: TSpeedButton
+    Left = 469
+    Height = 32
+    Hint = 'Refresh List Of Devices'
+    Top = 32
+    Width = 32
+    Images = ImageList1
+    ImageIndex = 0
+    OnClick = RefreshTTYButtonClick
+    ShowHint = True
+    ParentShowHint = False
+  end
+  object EraseDeviceButton: TSpeedButton
+    Left = 469
+    Height = 32
+    Hint = 'Erase Device'
+    Top = 96
+    Width = 32
+    Images = ImageList1
+    ImageIndex = 1
+    OnClick = EraseDeviceButtonClick
+    ShowHint = True
+    ParentShowHint = False
+  end
+  object FusesBox: TGroupBox
+    Left = 16
+    Height = 160
+    Top = 136
+    Width = 185
+    Caption = 'Fuses'
+    ClientHeight = 140
+    ClientWidth = 183
     TabOrder = 3
+    object FusesGrid: TStringGrid
+      Left = 0
+      Height = 96
+      Top = 0
+      Width = 183
+      Align = alTop
+      ColCount = 3
+      DefaultColWidth = 48
+      FixedCols = 2
+      RowCount = 1
+      TabOrder = 0
+    end
+    object ReadFuses: TButton
+      Left = 8
+      Height = 25
+      Top = 104
+      Width = 75
+      Caption = 'Read'
+      TabOrder = 1
+    end
+    object WriteFuses: TButton
+      Left = 96
+      Height = 25
+      Top = 104
+      Width = 75
+      Caption = 'Write'
+      TabOrder = 2
+    end
+  end
+  object MemoryBox: TGroupBox
+    Left = 208
+    Height = 160
+    Top = 136
+    Width = 293
+    Caption = 'Memory'
+    ClientHeight = 140
+    ClientWidth = 291
+    TabOrder = 4
+    object InputHEXFile: TFileNameEdit
+      Left = 8
+      Height = 36
+      Top = 8
+      Width = 272
+      Filter = '*.hex|Hex file'
+      FilterIndex = 0
+      HideDirectories = False
+      ButtonWidth = 32
+      NumGlyphs = 1
+      MaxLength = 0
+      TabOrder = 0
+    end
+    object EraseDeviceCheckBox: TCheckBox
+      Left = 8
+      Height = 23
+      Top = 48
+      Width = 228
+      Caption = 'Erase Device Before Programming'
+      TabOrder = 1
+    end
+    object EraseDeviceCheckBox1: TCheckBox
+      Left = 8
+      Height = 23
+      Top = 72
+      Width = 218
+      Caption = 'Verify Device After Programming'
+      OnChange = EraseDeviceCheckBox1Change
+      TabOrder = 2
+    end
+    object FlashButton: TButton
+      Left = 8
+      Height = 25
+      Top = 104
+      Width = 75
+      Caption = 'Flash'
+      OnClick = FlashButtonClick
+      TabOrder = 3
+    end
+    object VerifyButton: TButton
+      Left = 104
+      Height = 25
+      Top = 104
+      Width = 75
+      Caption = 'Verify'
+      TabOrder = 4
+    end
+    object ReadButton: TButton
+      Left = 200
+      Height = 25
+      Top = 104
+      Width = 75
+      Caption = 'Read'
+      OnClick = ReadButtonClick
+      TabOrder = 5
+    end
+  end
+  object ImageList1: TImageList
+    Height = 24
+    Width = 24
+    Left = 368
+    Top = 32
+    Bitmap = {
+      4C7A020000001800000018000000460600000000000078DAE598794C547710C7
+      412A7F344D2D89EC2E8A14BCAD31F188A6B589B5A68D6D63ABAD455D40905AB5
+      2ADAD434220A76E5D8155816763994FB140A4140C18B0888C8211E2020141045
+      562E3945C40BF6DBF9BDA72B362087B4FFF4259361DE6FE633F3E6F77EB3ECEA
+      E8FCB7171224FA4893198C4A287650EE49E7B9483B9489D4434F912AC1E88462
+      198358AFB1D31CE7E0A4A4076764BDB81A0F14258D4E582C63301631B5FC1307
+      D270CAA517F78A80E68AB713C6602C626AF9C90EDDC88F041A4B79515F056EA4
+      00D7E28727CC97C5BC8C672C626AF9C7ED81CB3194BB18B853007ABE5EEEDE48
+      84C5B058C6602CBAA7E527FE4E3923803AAAE14A1C383B61EF121CDB67302C61
+      BE2C86C532066391FDEA9DDC03E48602B597794DF6C8DFEBC11988FF15C80902
+      6A72794DF688F96F60206E17907D04A8CEE635D923E6BF8181D89D40963F5099
+      C96BB287E4C5EE5421D6AE61380CC4FC02642881F2745E93FD4676CC762917D3
+      CFEF4D0C446F05CE2B80B233B4A60267076E1D3F203B7A9B3DB71E67C7FB1DDB
+      6EC0497F06D3646B63A27E06D23D819254208FCE06B3A3B734216A8BA27F1E44
+      6EDE466B1A6ED6A4CB79BFFEC2EE31066391AD8D8BF8A91127FFA01992CC4B56
+      0070E22010610B846FDAC5FBD88A11B94983E47D1A5CA75953180B9C23DE390F
+      5ED2BDF87B2CFE940B1069FB58CB0FB70EA21C7DC80DA7F39EF84A62773CA7B5
+      633CDFA61D519B35288C7BDDE79F7231181C2BC22649CB0FB33544984D13D5D8
+      8B5467E0B4949FB7611B3508B1B2E77DACC4241A3A971A5CA199931F457E32DE
+      F7A52439508CB5866ABA8540F1C4D7F62DD27A32422CD21162D9471AA49F21D4
+      329EFAFFAED62744BC8DD628C75E208DEAE0FCFA49A8552369DA33F309839F73
+      737D045818303DE07A90853D82C5B42F36E034F3651263F9FE987D860689A51C
+      9BE45FFB9C0E16AB106CD1A0F37FB82C7C96E96DF0393E6EBD42AEB3C6FB83B1
+      66BFB72DAAD554960F83DD09BDBAE68A5A1D73C5F4B1C2EB8995898CBD30B61D
+      3395A530DC7B12E3D629D4639563DC7A2F2F56376373397CC63807F55B77BDA2
+      963107CB2192C84C0512AF6C1D89E49D51E52006E5B83B508EF1565E4D466E2A
+      B569406C8FD121AFB5A37E8E0172CC5014C2C8D5BF6B61461196E796638ACCAF
+      F0AD7AB5C1DB54779DE20ECB31DDBB10C6B2C0074B328BF175512DCC4BD530B1
+      4B6AD39F99B5E1AD72D073E85BC91B59DD1F67156355F15D5894DDC3CA80BB18
+      37BE0C13E65FEC99E1EE7F7BC6E180388193E72723C5B3BD9CE4E67B6FE9851B
+      587DA30E1B6FD66355B01A7AFA65983CAF0AD29BED086AEC8273490DBE8A4E6E
+      9D75D8EF9AC841FED1B0F9CEDE17661C8D7BF44D4125AC89FD5DC82BB6BCA213
+      51CDDD486CED414ADB631C6F7D0CEFAA7ACC5785359B49FD1C69EAE90E9980DE
+      41A3839EDF4F7153E59BD925DD673D315950059FCA4EFCD9F208691D4F90F1E0
+      19D23B9F21997244523EA5BA13AB93CF3F3493FA5E992C71371EEEB3E8CF3A6F
+      69B020A78767D3D78F8EA7C8EBEE45EEC35EEEEF38CA77B4A10BEE751DD85FD3
+      02CBFC9B9A69F2E0C629AEBE61931CA4B3879363AE3C501D73FF1152DB9FE042
+      D773E410FB2CB1E3295F70E343C8D51D70BCDD8A5D55CD5C3FD99E2D3E7B5963
+      E213D12272F1560DC59FE57EE41663313EABF904E958CA17487BEC496C2762EF
+      26B64D793DD610FBF36B77B0F0F22D7C9898A9113AFBEC1F8A3FDB23A020B4AE
+      9DAB97F523BCA91BFEF50F70987A7280ABBB49CB5E41EC45C49E7EE92F0814A1
+      4D02478F6943F1A7BBAA0EEDC92BD1B05E0450AFBD682F5D6ADB604FFDDE51D9
+      04AB173D59CED55DCDB10DD3F2217251E60CEB7D75922DFE22E6448B27D5EB5A
+      DBCED5FC5B7533B65434424CE78E9DBF65576F637E4135A63276662904B28066
+      A144367578E739416FA6C7917AF67EECA9BE8FED957C3FD696A8B192E6C6D22B
+      3598975F05D39C0A18669541A88C6813497CAC4772A6CDA4AAA81FB38B34B6E5
+      0D585F7A0FDF52CDACD74BA8D773F22A617C91D81925107887B50A5D95FB463A
+      33D83ECD514534B13E7F79BD169F52CDAC1FACD7A2EC7218A65CEA134AFD1B8C
+      1CE53F8C76EC19BBF99E5D74AEB06FD18B9A4D583F522E51CDE1CD0257D569C1
+      7E37E1DB8CD54912F94436F74C522E421894D02E94FA36885C54F1468EEE73C6
+      EA7F01A1C47385C04DE92772F2F86CAE64F0DF4AFA5F7F03028CBEF9
+    }
   end
 end

@@ -5,7 +5,8 @@ unit updiguimain;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls,
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Buttons,
+  EditBtn, Grids,
 {$IFNDEF MSWINDOWS}
   {$IFNDEF NO_LIBC}
   Libc,
@@ -29,28 +30,50 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
-    Button1: TButton;
-    ComboBox1: TComboBox;
-    ComboBox2: TComboBox;
+    ReadFuses : TButton;
+    WriteFuses : TButton;
+    FusesGrid : TStringGrid;
+    VerifyButton : TButton;
+    FlashButton : TButton;
+    EraseDeviceCheckBox : TCheckBox;
+    DevicesComboBox: TComboBox;
+    PortComboBox: TComboBox;
+    EraseDeviceCheckBox1 : TCheckBox;
+    InputHEXFile : TFileNameEdit;
+    FusesBox : TGroupBox;
+    MemoryBox : TGroupBox;
+    ImageList1 : TImageList;
     Label1: TLabel;
     Label2: TLabel;
     Log: TMemo;
+    RefreshTTYButton : TSpeedButton;
+    EraseDeviceButton : TSpeedButton;
+    ReadButton : TButton;
     procedure Button1Click(Sender: TObject);
-    procedure ComboBox1Change(Sender: TObject);
-    procedure ComboBox1Select(Sender: TObject);
-    procedure ComboBox2Change(Sender : TObject);
-    procedure ComboBox2Select(Sender: TObject);
+    procedure DevicesComboBoxChange(Sender: TObject);
+    procedure DevicesComboBoxSelect(Sender: TObject);
+    procedure EraseDeviceButtonClick(Sender : TObject);
+    procedure FlashButtonClick(Sender : TObject);
+    procedure PortComboBoxChange(Sender : TObject);
+    procedure PortComboBoxSelect(Sender: TObject);
+    procedure EraseDeviceCheckBox1Change(Sender : TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure ReadButtonClick(Sender : TObject);
+    procedure RefreshTTYButtonClick(Sender : TObject);
   private
     loclogger : pUPDI_logger;
     cfg       : pUPDI_Params;
   public
+    procedure RefreshPortsList;
     procedure LogOut(const Str : String);
   end;
 
 var
   Form1: TForm1;
+
+resourcestring
+  sOKString = 'Ok';
 
 implementation
 
@@ -201,7 +224,6 @@ var
   i, c : Integer;
   l : Integer;
   dst : AnsiString;
-  ports : string;
 begin
   loclogger := nil;
   cfg := nil;
@@ -223,25 +245,22 @@ begin
 
     SetLength(dst, DEVICES_NAME_LEN);
     c := UPDILIB_devices_get_count();
-    ComboBox1.Items.BeginUpdate;
+    DevicesComboBox.Items.BeginUpdate;
     try
       for i := 0 to c-1 do
       begin
         l := DEVICES_NAME_LEN;
         UPDILIB_devices_get_name(i, @(dst[1]), @l);
-        ComboBox1.Items.Add(Copy(dst, 1, l));
+        DevicesComboBox.Items.Add(Copy(dst, 1, l));
       end;
       if c > 0 then
-        ComboBox1.ItemIndex := 0;
+        DevicesComboBox.ItemIndex := 0;
     finally
-      ComboBox1.Items.EndUpdate;
+      DevicesComboBox.Items.EndUpdate;
     end;
 
   end else
     LogOut(SFailedToLoadUPDILib);
-
-  ports := GetSerialPortNames;
-  ComboBox2.Items.Text := ports;
 end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
@@ -260,7 +279,96 @@ begin
     DestroyUPDILibInterface;
 end;
 
+procedure TForm1.ReadButtonClick(Sender : TObject);
+const
+  cDEV_FLASH_SIZE_MAX = $100000;
+var
+  c : Boolean;
+  F : TFileStream;
+  sz : Int32;
+  buffer : Pointer;
+begin
+  if not Assigned(cfg) then Exit;
+
+  if Length(InputHEXFile.FileName) = 0 then
+  begin
+    MessageDlg('You should specify correct file name', mtError, [mbOK], -1);
+    exit;
+  end;
+
+  if FileExists(InputHEXFile.FileName) then
+  begin
+    c := MessageDlg(Format('File %s exists. Rewrite?', [InputHEXFile.FileName]),
+                  mtWarning, mbYesNo, -1) = mrYes;
+
+  end else
+    c := true;
+  if c then
+  begin
+    buffer := GetMem(cDEV_FLASH_SIZE_MAX);
+    try
+      sz := cDEV_FLASH_SIZE_MAX;
+      if UPDILIB_read_hex(cfg, PAnsiChar(buffer), @sz) = 0 then
+        Exit;
+    finally
+      Freemem(buffer);
+    end;
+    try
+      F := TFileStream.Create(InputHEXFile.FileName, fmOpenWrite or fmCreate);
+      try
+        F.Write(buffer^, sz);
+        LogOut(sOKString);
+      finally
+        F.Free;
+      end;
+    except
+      on E : Exception do
+      begin
+        LogOut(e.Message);
+      end;
+    end;
+  end;
+end;
+
+procedure TForm1.RefreshTTYButtonClick(Sender : TObject);
+begin
+  RefreshPortsList;
+end;
+
+procedure TForm1.RefreshPortsList;
+var
+  ports : string;
+begin
+  ports := GetSerialPortNames;
+  PortComboBox.Items.Text := ports;
+end;
+
 procedure TForm1.Button1Click(Sender: TObject);
+begin
+
+end;
+
+procedure TForm1.DevicesComboBoxChange(Sender: TObject);
+var
+  dev : AnsiString;
+begin
+  if IsUPDILibloaded then
+  begin
+    if Assigned(cfg) and (DevicesComboBox.ItemIndex >= 0) then
+    begin
+      dev := DevicesComboBox.Items[DevicesComboBox.ItemIndex];
+      UPDILIB_cfg_set_device(cfg, PChar(dev));
+      FusesGrid.RowCount := 1;
+    end;
+  end;
+end;
+
+procedure TForm1.DevicesComboBoxSelect(Sender: TObject);
+begin
+  DevicesComboBoxChange(Sender);
+end;
+
+procedure TForm1.EraseDeviceButtonClick(Sender : TObject);
 begin
   if IsUPDILibloaded then
   begin
@@ -269,42 +377,34 @@ begin
   end;
 end;
 
-procedure TForm1.ComboBox1Change(Sender: TObject);
-var
-  dev : AnsiString;
+procedure TForm1.FlashButtonClick(Sender : TObject);
 begin
-  if IsUPDILibloaded then
-  begin
-    if Assigned(cfg) and (ComboBox1.ItemIndex >= 0) then
-    begin
-      dev := ComboBox1.Items[ComboBox1.ItemIndex];
-      UPDILIB_cfg_set_device(cfg, PChar(dev));
-    end;
-  end;
+
 end;
 
-procedure TForm1.ComboBox1Select(Sender: TObject);
-begin
-  ComboBox1Change(Sender);
-end;
-
-procedure TForm1.ComboBox2Change(Sender : TObject);
+procedure TForm1.PortComboBoxChange(Sender : TObject);
 var
   p : AnsiString;
 begin
   if IsUPDILibloaded then
   begin
-    if Assigned(cfg) and (ComboBox2.ItemIndex >= 0) then
+    if Assigned(cfg) and (PortComboBox.ItemIndex >= 0) then
     begin
-      p := ComboBox2.Items[ComboBox2.ItemIndex];
+      p := PortComboBox.Items[PortComboBox.ItemIndex];
       UPDILIB_cfg_set_com(cfg, PChar(p));
+      FusesGrid.RowCount := 1;
     end;
   end;
 end;
 
-procedure TForm1.ComboBox2Select(Sender: TObject);
+procedure TForm1.PortComboBoxSelect(Sender: TObject);
 begin
-  ComboBox2Change(Sender);
+  PortComboBoxChange(Sender);
+end;
+
+procedure TForm1.EraseDeviceCheckBox1Change(Sender : TObject);
+begin
+
 end;
 
 procedure TForm1.LogOut(const Str: String);
