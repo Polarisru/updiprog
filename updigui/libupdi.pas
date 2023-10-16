@@ -42,6 +42,15 @@ const
   LOG_LEVEL_ERROR        = 3;
   LOG_LEVEL_LAST         = 4;
 
+  UPDI_SEQ_UNLOCK        = 1;
+  UPDI_SEQ_ENTER_PM      = 2;
+  UPDI_SEQ_ERASE         = 3;
+  UPDI_SEQ_FLASH         = 4;
+  UPDI_SEQ_READ          = 5;
+  UPDI_SEQ_SET_FUSES     = 6;
+  UPDI_SEQ_GET_FUSES     = 7;
+  UPDI_SEQ_LOCK          = 8;
+
 type
   UPDI_bool = Byte;
 
@@ -58,6 +67,15 @@ type
   end;
 
   pUPDI_fuse = ^UPDI_fuse;
+
+  UPDI_seq = record
+    seq_type : Byte;
+    data : Pointer;
+    data_len : Int32;
+  end;
+
+  pUPDI_seq = ^UPDI_seq;
+
 
 function UPDILIB_logger_init(const src : pansichar;
                              loglevel : int32;
@@ -80,17 +98,24 @@ function UPDILIB_cfg_set_com(cfg : pUPDI_Params;
                              const port : pansichar) : UPDI_bool;
 function UPDILIB_cfg_set_device(cfg : pUPDI_Params;
                              const name : pansichar) : UPDI_bool;
+function UPDILIB_cfg_get_baudrate(cfg : pUPDI_Params) : uint32;
+function UPDILIB_cfg_get_com(cfg : pUPDI_Params) : PAnsiChar;
+function UPDILIB_cfg_get_device(cfg : pUPDI_Params) : int8;
 
 function UPDILIB_devices_get_count() : int32;
 function UPDILIB_devices_get_name(id : int8;
                              name : pansichar; cnt : pint32) : UPDI_bool;
+function UPDILIB_devices_get_fuses_cnt(id : int8) : Byte;
+
+function UPDILIB_launch_seq(cfg : pUPDI_Params; seq : pUPDI_seq;
+                             len : Byte) : UPDI_bool;
 
 function UPDILIB_erase(cfg : pUPDI_Params) : UPDI_bool;
 
 function UPDILIB_write_fuses(cfg : pUPDI_Params;
-                             const fuses: pUPDI_fuse; cnt : int32) : UPDI_bool;
+                             const fuses: pUPDI_fuse; cnt : byte) : UPDI_bool;
 function UPDILIB_read_fuses(cfg : pUPDI_Params;
-                             fuses : pUPDI_fuse; cnt : pint32) : UPDI_bool;
+                             fuses : pUPDI_fuse; cnt : byte) : UPDI_bool;
 
 function UPDILIB_write_hex(cfg : pUPDI_Params;
                              const data : pansichar; cnt : int32) : UPDI_bool;
@@ -133,17 +158,25 @@ type
    p_UPDILIB_cfg_set_device = function (cfg : pUPDI_Params;
                              const name : pansichar) : UPDI_bool cdecl;
 
+   p_UPDILIB_cfg_get_baudrate = function (cfg : pUPDI_Params) : uint32 cdecl;
+   p_UPDILIB_cfg_get_com = function (cfg : pUPDI_Params) : pAnsichar cdecl;
+   p_UPDILIB_cfg_get_device = function (cfg : pUPDI_Params) : int8 cdecl;
+
    p_UPDILIB_devices_get_count = function () : int32 cdecl;
    p_UPDILIB_devices_get_name = function (id : int8;
                              name : pansichar; cnt : pint32) : UPDI_bool cdecl;
+   p_UPDILIB_devices_get_fuses_cnt = function (id : int8) : byte cdecl;
+
+   p_UPDILIB_launch_seq = function (cfg : pUPDI_Params; seq : pUPDI_seq;
+                             len : Byte) : UPDI_bool cdecl;
 
    p_UPDILIB_erase = function (cfg : pUPDI_Params) : UPDI_bool cdecl;
 
    p_UPDILIB_write_fuses = function (cfg : pUPDI_Params;
                              const fuses: pUPDI_fuse;
-                             cnt : int32) : UPDI_bool cdecl;
+                             cnt : byte) : UPDI_bool cdecl;
    p_UPDILIB_read_fuses = function (cfg : pUPDI_Params;
-                             fuses : pUPDI_fuse; cnt : pint32) : UPDI_bool cdecl;
+                             fuses : pUPDI_fuse; cnt : byte) : UPDI_bool cdecl;
 
    p_UPDILIB_write_hex = function (cfg : pUPDI_Params;
                              const data : pansichar;
@@ -162,8 +195,13 @@ var
   _UPDILIB_cfg_set_buadrate  : p_UPDILIB_cfg_set_buadrate  = nil;
   _UPDILIB_cfg_set_com       : p_UPDILIB_cfg_set_com       = nil;
   _UPDILIB_cfg_set_device    : p_UPDILIB_cfg_set_device    = nil;
+  _UPDILIB_cfg_get_baudrate  : p_UPDILIB_cfg_get_baudrate  = nil;
+  _UPDILIB_cfg_get_com       : p_UPDILIB_cfg_get_com       = nil;
+  _UPDILIB_cfg_get_device    : p_UPDILIB_cfg_get_device    = nil;
   _UPDILIB_devices_get_count : p_UPDILIB_devices_get_count = nil;
   _UPDILIB_devices_get_name  : p_UPDILIB_devices_get_name  = nil;
+  _UPDILIB_devices_get_fuses_cnt : p_UPDILIB_devices_get_fuses_cnt = nil;
+  _UPDILIB_launch_seq        : p_UPDILIB_launch_seq        = nil;
   _UPDILIB_erase             : p_UPDILIB_erase             = nil;
   _UPDILIB_write_fuses       : p_UPDILIB_write_fuses       = nil;
   _UPDILIB_read_fuses        : p_UPDILIB_read_fuses        = nil;
@@ -246,6 +284,30 @@ begin
     Result := 0;
 end;
 
+function UPDILIB_cfg_get_baudrate(cfg : pUPDI_Params) : uint32;
+begin
+  if Assigned(_UPDILIB_cfg_get_baudrate) then
+    Result := _UPDILIB_cfg_get_baudrate(cfg)
+  else
+    Result := 0;
+end;
+
+function UPDILIB_cfg_get_com(cfg : pUPDI_Params) : PAnsiChar;
+begin
+  if Assigned(_UPDILIB_cfg_get_com) then
+    Result := _UPDILIB_cfg_get_com(cfg)
+  else
+    Result := nil;
+end;
+
+function UPDILIB_cfg_get_device(cfg : pUPDI_Params) : int8;
+begin
+  if Assigned(_UPDILIB_cfg_get_device) then
+    Result := _UPDILIB_cfg_get_device(cfg)
+  else
+    Result := 0;
+end;
+
 function UPDILIB_devices_get_count: int32;
 begin
   if Assigned(_UPDILIB_devices_get_count) then
@@ -263,6 +325,23 @@ begin
     Result := 0;
 end;
 
+function UPDILIB_devices_get_fuses_cnt(id : int8) : Byte;
+begin
+  if Assigned(_UPDILIB_devices_get_fuses_cnt) then
+    Result := _UPDILIB_devices_get_fuses_cnt(id)
+  else
+    Result := 0;
+end;
+
+function UPDILIB_launch_seq(cfg : pUPDI_Params; seq : pUPDI_seq; len : Byte
+  ) : UPDI_bool;
+begin
+  if Assigned(_UPDILIB_launch_seq) then
+    Result := _UPDILIB_launch_seq(cfg, seq, len)
+  else
+    Result := 0;
+end;
+
 function UPDILIB_erase(cfg: pUPDI_Params): UPDI_bool;
 begin
   if Assigned(_UPDILIB_erase) then
@@ -272,7 +351,7 @@ begin
 end;
 
 function UPDILIB_write_fuses(cfg: pUPDI_Params; const fuses: pUPDI_fuse;
-  cnt: int32): UPDI_bool;
+  cnt: byte): UPDI_bool;
 begin
   if Assigned(_UPDILIB_write_fuses) then
     Result := _UPDILIB_write_fuses(cfg, fuses, cnt)
@@ -280,7 +359,7 @@ begin
     Result := 0;
 end;
 
-function UPDILIB_read_fuses(cfg: pUPDI_Params; fuses: pUPDI_fuse; cnt: pint32
+function UPDILIB_read_fuses(cfg: pUPDI_Params; fuses: pUPDI_fuse; cnt: byte
   ): UPDI_bool;
 begin
   if Assigned(_UPDILIB_read_fuses) then
@@ -355,6 +434,8 @@ begin
   _UPDILIB_cfg_set_device := p_UPDILIB_cfg_set_device(GetProcAddr(LUPDILib, 'UPDILIB_cfg_set_device'));
   _UPDILIB_devices_get_count := p_UPDILIB_devices_get_count(GetProcAddr(LUPDILib, 'UPDILIB_devices_get_count'));
   _UPDILIB_devices_get_name := p_UPDILIB_devices_get_name(GetProcAddr(LUPDILib, 'UPDILIB_devices_get_name'));
+  _UPDILIB_devices_get_fuses_cnt := p_UPDILIB_devices_get_fuses_cnt(GetProcAddr(LUPDILib, 'UPDILIB_devices_get_fuses_cnt'));
+  _UPDILIB_launch_seq        := p_UPDILIB_launch_seq(GetProcAddr(LUPDILib, 'UPDILIB_launch_seq'));
   _UPDILIB_erase := p_UPDILIB_erase(GetProcAddr(LUPDILib, 'UPDILIB_erase'));
   _UPDILIB_write_fuses := p_UPDILIB_write_fuses(GetProcAddr(LUPDILib, 'UPDILIB_write_fuses'));
   _UPDILIB_read_fuses := p_UPDILIB_read_fuses(GetProcAddr(LUPDILib, 'UPDILIB_read_fuses'));
@@ -376,6 +457,8 @@ begin
   _UPDILIB_cfg_set_device := nil;
   _UPDILIB_devices_get_count := nil;
   _UPDILIB_devices_get_name := nil;
+  _UPDILIB_devices_get_fuses_cnt := nil;
+  _UPDILIB_launch_seq := nil;
   _UPDILIB_erase := nil;
   _UPDILIB_write_fuses := nil;
   _UPDILIB_read_fuses := nil;

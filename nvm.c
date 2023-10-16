@@ -43,7 +43,8 @@ bool NVM_EnterProgmode(UPDI_APP * app)
  */
 void NVM_LeaveProgmode(UPDI_APP * app)
 {
-  APP_LeaveProgmode(app);
+  if (app->NVM_Progmode)
+    APP_LeaveProgmode(app);
   app->NVM_Progmode = false;
 }
 

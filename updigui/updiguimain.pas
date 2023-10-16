@@ -23,13 +23,14 @@ uses
   winver,
   {$ENDIF}
 {$ENDIF}
-  libUPDI,ctypes;
+  libUPDI,ctypes, Types;
 
 type
 
   { TForm1 }
 
   TForm1 = class(TForm)
+    Label3 : TLabel;
     ReadFuses : TButton;
     WriteFuses : TButton;
     FusesGrid : TStringGrid;
@@ -54,17 +55,25 @@ type
     procedure DevicesComboBoxSelect(Sender: TObject);
     procedure EraseDeviceButtonClick(Sender : TObject);
     procedure FlashButtonClick(Sender : TObject);
+    procedure FusesGridDrawCell(Sender : TObject; aCol, aRow : Integer;
+      aRect : TRect; aState : TGridDrawState);
+    procedure FusesGridPrepareCanvas(Sender : TObject; aCol, aRow : Integer;
+      aState : TGridDrawState);
     procedure PortComboBoxChange(Sender : TObject);
     procedure PortComboBoxSelect(Sender: TObject);
     procedure EraseDeviceCheckBox1Change(Sender : TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure ReadButtonClick(Sender : TObject);
+    procedure ReadFusesClick(Sender : TObject);
     procedure RefreshTTYButtonClick(Sender : TObject);
+    procedure WriteFusesClick(Sender : TObject);
   private
     loclogger : pUPDI_logger;
     cfg       : pUPDI_Params;
   public
+    function FuseState(pos : integer) : Byte;
+    procedure ConsumeFuses(fuses : pUPDI_fuse; cnt : integer);
     procedure RefreshPortsList;
     procedure LogOut(const Str : String);
   end;
@@ -259,6 +268,16 @@ begin
       DevicesComboBox.Items.EndUpdate;
     end;
 
+    FusesGrid.ColWidths[0] := 32;
+    FusesGrid.ColWidths[1] := 48;
+    FusesGrid.ColWidths[2] := 48;
+
+    FusesGrid.Cells[0,0] := '#';
+    FusesGrid.Cells[1,0] := 'Cur';
+    FusesGrid.Cells[2,0] := 'New';
+
+    RefreshPortsList;
+
   end else
     LogOut(SFailedToLoadUPDILib);
 end;
@@ -330,9 +349,118 @@ begin
   end;
 end;
 
+procedure TForm1.ReadFusesClick(Sender : TObject);
+var
+  fuses : pUPDI_fuse;
+  cnt, i : integer;
+begin
+  if Assigned(cfg) then
+  begin
+    FusesGrid.RowCount := 1;
+    cnt := UPDILIB_devices_get_fuses_cnt(UPDILIB_cfg_get_device(cfg));
+    if cnt > 0 then
+    begin
+      fuses := pUPDI_fuse(Getmem(sizeof(UPDI_fuse) * cnt));
+      if Assigned(fuses) then
+      begin
+        for i := 0 to cnt-1 do fuses[i].fuse := i;
+        try
+          if UPDILIB_read_fuses(cfg, fuses, cnt) > 0 then
+            ConsumeFuses(fuses, cnt);
+        finally
+          Freemem(fuses);
+        end;
+      end;
+    end;
+  end;
+end;
+
 procedure TForm1.RefreshTTYButtonClick(Sender : TObject);
 begin
   RefreshPortsList;
+end;
+
+procedure TForm1.WriteFusesClick(Sender : TObject);
+var
+  seq : Array [0..2] of UPDI_seq;
+  fuses, wfuses : pUPDI_fuse;
+  cnt, i, wcnt : integer;
+begin
+  if Assigned(cfg) then
+  begin
+    cnt := UPDILIB_devices_get_fuses_cnt(UPDILIB_cfg_get_device(cfg));
+    if cnt > 0 then
+    begin
+      fuses := pUPDI_fuse(Getmem(sizeof(UPDI_fuse) * 2 * cnt));
+      wfuses := @(fuses[cnt]);
+      if Assigned(fuses) then
+      begin
+        try
+          for i := 0 to cnt-1 do
+            fuses[i].fuse := i;
+          wcnt := 0;
+          for i := 0 to FusesGrid.RowCount-2 do
+          begin
+            if FuseState(i) = 1 then begin
+              wfuses[wcnt].fuse  := strtoint(FusesGrid.Cells[0, i+1]);
+              wfuses[wcnt].value := strtoint('$' + FusesGrid.Cells[2, i+1]);
+              inc(wcnt);
+            end;
+          end;
+          if wcnt > 0 then
+          begin
+            seq[0].seq_type := UPDI_SEQ_ENTER_PM;
+            seq[1].seq_type := UPDI_SEQ_SET_FUSES;
+            seq[1].data := Pointer(wfuses);
+            seq[1].data_len := wcnt;
+            seq[2].seq_type := UPDI_SEQ_GET_FUSES;
+            seq[2].data := Pointer(fuses);
+            seq[2].data_len := cnt;
+            if UPDILIB_launch_seq(cfg, @(seq[0]), 3) > 0 then
+              ConsumeFuses(fuses, cnt);
+          end;
+        finally
+          Freemem(fuses);
+        end;
+      end;
+    end;
+  end;
+end;
+
+function TForm1.FuseState(pos : integer) : Byte;
+var
+  v, v0 : integer;
+begin
+  if pos >= (FusesGrid.RowCount-1) then Exit(2);
+
+  If TryStrToInt('$' + FusesGrid.Cells[2, pos+1], v) then
+  begin
+    v0 := StrToInt('$'+ FusesGrid.Cells[1, pos+1]);
+    if v0 = v then
+      Result := 0
+    else
+      Result := 1
+  end else
+  begin
+    Result := 2;
+  end;
+end;
+
+procedure TForm1.ConsumeFuses(fuses : pUPDI_fuse; cnt : integer);
+var
+  i : integer;
+begin
+  FusesGrid.BeginUpdate;
+  try
+    FusesGrid.RowCount := cnt + 1;
+    for i := 0 to cnt-1 do begin
+      FusesGrid.Cells[0, i + 1] := Inttostr(fuses[i].fuse);
+      FusesGrid.Cells[1, i + 1] := IntToHex(fuses[i].value, 2);
+      FusesGrid.Cells[2, i + 1] := IntToHex(fuses[i].value, 2);
+    end;
+  finally
+    FusesGrid.EndUpdate;
+  end;
 end;
 
 procedure TForm1.RefreshPortsList;
@@ -380,6 +508,31 @@ end;
 procedure TForm1.FlashButtonClick(Sender : TObject);
 begin
 
+end;
+
+procedure TForm1.FusesGridDrawCell(Sender : TObject; aCol, aRow : Integer;
+  aRect : TRect; aState : TGridDrawState);
+begin
+
+end;
+
+procedure TForm1.FusesGridPrepareCanvas(Sender : TObject; aCol, aRow : Integer;
+  aState : TGridDrawState);
+var
+  fst : Byte;
+begin
+  if aRow > 0 then
+  begin
+    if aCol = 2 then
+    begin
+      fst := FuseState(aRow - 1);
+      case fst of
+      0: FusesGrid.Canvas.Font.Color := clGreen;
+      1: FusesGrid.Canvas.Font.Color := clBlue;
+      2: FusesGrid.Canvas.Font.Color := clRed;
+      end;
+    end;
+  end;
 end;
 
 procedure TForm1.PortComboBoxChange(Sender : TObject);
