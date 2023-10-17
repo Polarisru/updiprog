@@ -7,6 +7,7 @@
 
 #include "com.h"
 #include "log.h"
+#include "sleep.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -75,7 +76,7 @@ UPDI_COM_port* COM_Open(char *port, uint32_t baudrate, bool have_parity, bool tw
   #endif
 
   #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__linux)
-  res->fd = open(port, O_RDWR | O_NOCTTY );
+  res->fd = open(port, O_RDWR | O_NOCTTY | O_SYNC );
   if (res->fd <0) {
     free(res);
     return false;
@@ -121,8 +122,9 @@ UPDI_COM_port* COM_Open(char *port, uint32_t baudrate, bool have_parity, bool tw
   else
     SerialPortSettings.c_cflag &= ~CSTOPB;  /* CSTOPB = 2 Stop bits,here it is cleared so 1 Stop bit */
   SerialPortSettings.c_cflag |= (CREAD | CLOCAL); /* Enable receiver,Ignore Modem Control lines       */
+  SerialPortSettings.c_cflag &= ~ICANON;
   SerialPortSettings.c_cc[VMIN]  = 0;            // read doesn't block
-  SerialPortSettings.c_cc[VTIME] = 5;            // 0.1 seconds read timeout
+  SerialPortSettings.c_cc[VTIME] = 50;            // 5 seconds read timeout
   tcsetattr(res->fd, TCSANOW, &SerialPortSettings);  /* Set the attributes to the termios structure*/
   tcflush(res->fd, TCIFLUSH);
   #endif
@@ -207,9 +209,18 @@ int COM_Read(UPDI_COM_port* port, uint8_t *data, uint16_t len)
   ReadFile(port->hSerial, data, len, &dwBytesRead, NULL);
   #endif
   #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__linux)
-  int dwBytesRead = read(port->fd, data, len);
-  if (dwBytesRead < 0)
-    return -1;
+  int dwBytesRead = 0;
+
+  while (len > 0) {
+      int c = read(port->fd, data, len);
+      if (c < 0)  // error
+        return -1;
+      if (c == 0) // timeout
+        break;
+      data += c;
+      dwBytesRead += c;
+      len -= c;
+  }
   #endif
 
   return dwBytesRead;

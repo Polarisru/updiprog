@@ -7,6 +7,7 @@
 #include "log.h"
 #include "nvm.h"
 #include "progress.h"
+#include "sleep.h"
 #include "updi.h"
 
 #ifdef __cplusplus
@@ -129,6 +130,7 @@ bool NVM_ReadFlash(UPDI_APP * app, uint16_t address, uint8_t *data, uint16_t siz
     {
       // error occurred, try once more
       err_counter++;
+      //msleep(err_counter << 8);
       if (err_counter > NVM_MAX_ERRORS)
       {
         PROGRESS_Break();
@@ -321,12 +323,33 @@ bool NVM_raw_gets(void* ud, char * dst, int32_t cnt) {
   int len = src->len - src->pos;
   cnt--;
   if (cnt <= 0) return false;
-
   if (cnt > len)
      cnt = len;
-  memcpy(dst, &(src->data[src->pos]), cnt);
-  dst[cnt] = 0;
-  src->pos+=cnt;
+
+  cnt += src->pos;
+  char * c = &(src->data[src->pos]);
+  char * d = dst;
+  bool eol = false;
+  while (src->pos < cnt) {
+    switch (*c) {
+    case '\r':
+        eol = true;
+        break;
+    case '\n':
+        eol = true;
+        break;
+    default:
+        if (eol)
+           goto whs;
+
+    }
+    *d = *c;
+    d++;
+    c++;
+    src->pos++;
+  }
+whs:
+    *d = '\0';
 
   return true;
 }
@@ -418,7 +441,7 @@ bool NVM_raw_write(void* ud, const void *ptr, int32_t len) {
   if (len > cnt)
      len = cnt;
   memcpy(&(src->data[src->pos]), ptr, len);
-  src->pos+=cnt;
+  src->pos+=len;
 
   return true;
 }
@@ -429,7 +452,7 @@ bool NVM_SaveIhexRaw(UPDI_APP * app, NVM_raw_data *dst, uint16_t address, uint16
   raw_stream.ud = dst;
   raw_stream.write = &NVM_raw_write;
 
-  bool res = NVM_LoadIhexStream(app, &raw_stream, address, len);
+  bool res = NVM_SaveIhexStream(app, &raw_stream, address, len);
 
   return res;
 }

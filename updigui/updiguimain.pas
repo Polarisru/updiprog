@@ -39,7 +39,7 @@ type
     EraseDeviceCheckBox : TCheckBox;
     DevicesComboBox: TComboBox;
     PortComboBox: TComboBox;
-    EraseDeviceCheckBox1 : TCheckBox;
+    VerifyDeviceCheckBox : TCheckBox;
     InputHEXFile : TFileNameEdit;
     FusesBox : TGroupBox;
     MemoryBox : TGroupBox;
@@ -59,9 +59,10 @@ type
       aRect : TRect; aState : TGridDrawState);
     procedure FusesGridPrepareCanvas(Sender : TObject; aCol, aRow : Integer;
       aState : TGridDrawState);
+    procedure InputHEXFileChange(Sender : TObject);
     procedure PortComboBoxChange(Sender : TObject);
     procedure PortComboBoxSelect(Sender: TObject);
-    procedure EraseDeviceCheckBox1Change(Sender : TObject);
+    procedure VerifyDeviceCheckBoxChange(Sender : TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure ReadButtonClick(Sender : TObject);
@@ -83,8 +84,18 @@ var
 
 resourcestring
   sOKString = 'Ok';
+  sYouShouldSpecifyCorr = 'You should specify correct file name';
+  sFileSIsNotExists = 'File %s is not exists';
+  sFileSExistsRewrite = 'File %s exists. Rewrite?';
+  sHEXFileIsEmpty = 'HEX file is empty';
+  sNotEnoughtMemoryCant = 'Not enought memory. Cant allocate buffer';
+  sVerifyOK = 'Verify OK';
+  sVerifyFail = 'Verify Fail';
 
 implementation
+
+const
+  cDEV_FLASH_SIZE_MAX = $100000;
 
 {$R *.lfm}
 
@@ -249,8 +260,12 @@ begin
 
     SetLength(dst, COMPORT_LEN);
     cfg := UPDILIB_cfg_init();
+
     if Assigned(cfg) then
+    begin
       UPDILIB_cfg_set_logger(cfg, loclogger);
+      UPDILIB_cfg_set_buadrate(cfg, 9600);
+    end;
 
     SetLength(dst, DEVICES_NAME_LEN);
     c := UPDILIB_devices_get_count();
@@ -299,8 +314,6 @@ begin
 end;
 
 procedure TForm1.ReadButtonClick(Sender : TObject);
-const
-  cDEV_FLASH_SIZE_MAX = $100000;
 var
   c : Boolean;
   F : TFileStream;
@@ -311,13 +324,13 @@ begin
 
   if Length(InputHEXFile.FileName) = 0 then
   begin
-    MessageDlg('You should specify correct file name', mtError, [mbOK], -1);
+    MessageDlg(sYouShouldSpecifyCorr, mtError, [mbOK], -1);
     exit;
   end;
 
   if FileExists(InputHEXFile.FileName) then
   begin
-    c := MessageDlg(Format('File %s exists. Rewrite?', [InputHEXFile.FileName]),
+    c := MessageDlg(Format(sFileSExistsRewrite, [InputHEXFile.FileName]),
                   mtWarning, mbYesNo, -1) = mrYes;
 
   end else
@@ -329,22 +342,22 @@ begin
       sz := cDEV_FLASH_SIZE_MAX;
       if UPDILIB_read_hex(cfg, PAnsiChar(buffer), @sz) = 0 then
         Exit;
+      try
+        F := TFileStream.Create(InputHEXFile.FileName, fmOpenWrite or fmCreate);
+        try
+          F.Write(buffer^, sz);
+          LogOut(sOKString);
+        finally
+          F.Free;
+        end;
+      except
+        on E : Exception do
+        begin
+          LogOut(e.Message);
+        end;
+      end;
     finally
       Freemem(buffer);
-    end;
-    try
-      F := TFileStream.Create(InputHEXFile.FileName, fmOpenWrite or fmCreate);
-      try
-        F.Write(buffer^, sz);
-        LogOut(sOKString);
-      finally
-        F.Free;
-      end;
-    except
-      on E : Exception do
-      begin
-        LogOut(e.Message);
-      end;
     end;
   end;
 end;
@@ -506,8 +519,117 @@ begin
 end;
 
 procedure TForm1.FlashButtonClick(Sender : TObject);
+var
+  v : Boolean;
+  F : TFileStream;
+  sz : Int32;
+  buffer, rbuffer : Pointer;
+  seq : Array [0..3] of UPDI_seq;
+  seq_len, rloc, wloc : integer;
 begin
+  if not Assigned(cfg) then Exit;
 
+  if Length(InputHEXFile.FileName) = 0 then
+  begin
+    MessageDlg(sYouShouldSpecifyCorr, mtError, [mbOK], - 1);
+    exit;
+  end;
+
+  if not FileExists(InputHEXFile.FileName) then
+  begin
+    MessageDlg(Format(sFileSIsNotExists, [InputHEXFile.FileName]),
+                  mtError, [mbOK], -1);
+
+  end else
+  begin
+    try
+      F := TFileStream.Create(InputHEXFile.FileName, fmOpenRead);
+      try
+        buffer := GetMem(cDEV_FLASH_SIZE_MAX);
+        if assigned(buffer) then
+        try
+          sz := cDEV_FLASH_SIZE_MAX;
+          sz := F.Read(buffer^, sz);
+
+          if sz > 0 then
+          begin
+            seq_len := 1;
+            seq[0].seq_type := UPDI_SEQ_ENTER_PM;
+
+            if EraseDeviceCheckBox.Checked then
+            begin
+              seq[1].seq_type := UPDI_SEQ_ERASE;
+              inc(seq_len);
+            end;
+
+            with seq[seq_len] do
+            begin
+              seq_type := UPDI_SEQ_FLASH;
+              data := buffer;
+              data_len := sz;
+            end;
+            wloc := seq_len;
+            inc(seq_len);
+
+            if VerifyDeviceCheckBox.Checked then
+            begin
+              rbuffer := GetMem(cDEV_FLASH_SIZE_MAX);
+              with seq[seq_len] do
+              begin
+                seq_type := UPDI_SEQ_READ;
+                data := rbuffer;
+                data_len := cDEV_FLASH_SIZE_MAX;
+              end;
+              rloc := seq_len;
+              inc(seq_len);
+            end else begin
+              rloc := -1;
+              rbuffer := nil;
+            end;
+
+            try
+              if UPDILIB_launch_seq(cfg, @(seq), seq_len) > 0 then
+              begin
+                if VerifyDeviceCheckBox.Checked and (rloc > 0) then
+                begin
+                  if seq[wloc].data_len <> seq[rloc].data_len then
+                  begin
+                    v := false;
+                  end else
+                  begin
+                    v := CompareMem(seq[wloc].data, seq[rloc].data, seq[rloc].data_len);
+                  end;
+                  if v then
+                    LogOut(sVerifyOK)
+                  else
+                    LogOut(sVerifyFail);
+                end;
+              end else
+                Exit;
+            finally
+              if assigned(rbuffer) then
+                Freemem(rbuffer);
+            end;
+          end else
+          begin
+            LogOut(sHEXFileIsEmpty);
+            Exit;
+          end;
+          LogOut(sOKString);
+        finally
+          Freemem(buffer);
+        end else
+          LogOut(sNotEnoughtMemoryCant);
+      finally
+        F.Free;
+      end;
+    except
+      on E : Exception do
+      begin
+        LogOut(e.Message);
+      end;
+    end;
+  end;
 end;
 
 procedure TForm1.FusesGridDrawCell(Sender : TObject; aCol, aRow : Integer;
@@ -535,6 +657,11 @@ begin
   end;
 end;
 
+procedure TForm1.InputHEXFileChange(Sender : TObject);
+begin
+
+end;
+
 procedure TForm1.PortComboBoxChange(Sender : TObject);
 var
   p : AnsiString;
@@ -555,7 +682,7 @@ begin
   PortComboBoxChange(Sender);
 end;
 
-procedure TForm1.EraseDeviceCheckBox1Change(Sender : TObject);
+procedure TForm1.VerifyDeviceCheckBoxChange(Sender : TObject);
 begin
 
 end;

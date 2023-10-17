@@ -279,7 +279,8 @@ DLL_EXPORT UPDI_bool UPDILIB_launch_seq(UPDI_Params * _cfg,
                     data.len = _seq[i].data_len;
                     data.pos = 0;
 
-                    NVM_LoadIhexRaw(app, &data, DEVICES_GetFlashStart(app->DEVICE_Id), DEVICES_GetFlashLength(app->DEVICE_Id));
+                    if (!NVM_LoadIhexRaw(app, &data, DEVICES_GetFlashStart(app->DEVICE_Id), DEVICES_GetFlashLength(app->DEVICE_Id)))
+                        break_seq = false;
                 }
 
                 break;
@@ -303,8 +304,10 @@ DLL_EXPORT UPDI_bool UPDILIB_launch_seq(UPDI_Params * _cfg,
                     data.data = (char*)_seq[i].data;
                     data.len = _seq[i].data_len;
                     data.pos = 0;
-                    NVM_SaveIhexRaw(app, &data, DEVICES_GetFlashStart(app->DEVICE_Id), DEVICES_GetFlashLength(app->DEVICE_Id));
-                    _seq[i].data_len = data.pos;
+                    if (!NVM_SaveIhexRaw(app, &data, DEVICES_GetFlashStart(app->DEVICE_Id), DEVICES_GetFlashLength(app->DEVICE_Id)))
+                        break_seq = false;
+                    else
+                        _seq[i].data_len = data.pos;
                 }
 
                 break;

@@ -142,13 +142,14 @@ object Form1: TForm1
       Height = 36
       Top = 24
       Width = 304
-      Filter = '*.hex|Hex file'
+      Filter = 'Hex file|*.hex'
       FilterIndex = 0
       HideDirectories = False
       ButtonWidth = 32
       NumGlyphs = 1
       MaxLength = 0
       TabOrder = 0
+      OnChange = InputHEXFileChange
     end
     object EraseDeviceCheckBox: TCheckBox
       Left = 8
@@ -158,13 +159,13 @@ object Form1: TForm1
       Caption = 'Erase Device Before Programming'
       TabOrder = 1
     end
-    object EraseDeviceCheckBox1: TCheckBox
+    object VerifyDeviceCheckBox: TCheckBox
       Left = 8
       Height = 23
       Top = 144
       Width = 218
       Caption = 'Verify Device After Programming'
-      OnChange = EraseDeviceCheckBox1Change
+      OnChange = VerifyDeviceCheckBoxChange
       TabOrder = 2
     end
     object FlashButton: TButton
