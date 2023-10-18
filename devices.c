@@ -252,7 +252,7 @@ uint16_t DEVICES_GetFusesAddress(int8_t id)
     return DEVICES_List[id].fuses_address;
 }
 
-uint16_t DEVICES_GetGigRowAddress(int8_t id)
+uint16_t DEVICES_GetSigRowAddress(int8_t id)
 {
   if (id == DEVICE_UNKNOWN_ID)
     return 0;

@@ -36,7 +36,7 @@ bool NVM_GetDeviceInfo(UPDI_APP * app)
 
   LOG_Print(app->logger, LOG_LEVEL_INFO, MSG_READING_DEVICE_INFO);
 
-  address = DEVICES_GetFusesAddress(app->DEVICE_Id);
+  address = DEVICES_GetSigRowAddress(app->DEVICE_Id);
 
   int offset = 0;
   while (offset < 6) {

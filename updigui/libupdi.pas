@@ -488,6 +488,8 @@ procedure LoadUPDILibEntryPoints;
 begin
   _UPDILIB_logger_init := p_UPDILIB_logger_init(GetProcAddr(LUPDILib, 'UPDILIB_logger_init'));
   _UPDILIB_logger_done := p_UPDILIB_logger_done(GetProcAddr(LUPDILib, 'UPDILIB_logger_done'));
+  _UPDILIB_progress_init := p_UPDILIB_progress_init(GetProcAddr(LUPDILib, 'UPDILIB_progress_init'));
+  _UPDILIB_progress_done := p_UPDILIB_progress_done(GetProcAddr(LUPDILib, 'UPDILIB_progress_done'));
   _UPDILIB_set_glb_logger_onlog := p_UPDILIB_set_glb_logger_onlog(GetProcAddr(LUPDILib, 'UPDILIB_set_glb_logger_onlog'));
   _UPDILIB_set_glb_logger_level := p_UPDILIB_set_glb_logger_level(GetProcAddr(LUPDILib, 'UPDILIB_set_glb_logger_level'));
   _UPDILIB_cfg_init := p_UPDILIB_cfg_init(GetProcAddr(LUPDILib, 'UPDILIB_cfg_init'));
@@ -497,6 +499,9 @@ begin
   _UPDILIB_cfg_set_buadrate := p_UPDILIB_cfg_set_buadrate(GetProcAddr(LUPDILib, 'UPDILIB_cfg_set_buadrate'));
   _UPDILIB_cfg_set_com := p_UPDILIB_cfg_set_com(GetProcAddr(LUPDILib, 'UPDILIB_cfg_set_com'));
   _UPDILIB_cfg_set_device := p_UPDILIB_cfg_set_device(GetProcAddr(LUPDILib, 'UPDILIB_cfg_set_device'));
+  _UPDILIB_cfg_get_baudrate := p_UPDILIB_cfg_get_baudrate(GetProcAddr(LUPDILib, 'UPDILIB_cfg_get_baudrate'));
+  _UPDILIB_cfg_get_com      := p_UPDILIB_cfg_get_com(GetProcAddr(LUPDILib, 'UPDILIB_cfg_get_com'));
+  _UPDILIB_cfg_get_device   := p_UPDILIB_cfg_get_device(GetProcAddr(LUPDILib, 'UPDILIB_cfg_get_device'));
   _UPDILIB_devices_get_count := p_UPDILIB_devices_get_count(GetProcAddr(LUPDILib, 'UPDILIB_devices_get_count'));
   _UPDILIB_devices_get_name := p_UPDILIB_devices_get_name(GetProcAddr(LUPDILib, 'UPDILIB_devices_get_name'));
   _UPDILIB_devices_get_fuses_cnt := p_UPDILIB_devices_get_fuses_cnt(GetProcAddr(LUPDILib, 'UPDILIB_devices_get_fuses_cnt'));
@@ -513,6 +518,8 @@ procedure ClearUPDILibEntryPoints;
 begin
   _UPDILIB_logger_init := nil;
   _UPDILIB_logger_done := nil;
+  _UPDILIB_progress_init := nil;
+  _UPDILIB_progress_done := nil;
   _UPDILIB_set_glb_logger_onlog := nil;
   _UPDILIB_set_glb_logger_level := nil;
   _UPDILIB_cfg_init := nil;
@@ -522,6 +529,9 @@ begin
   _UPDILIB_cfg_set_buadrate := nil;
   _UPDILIB_cfg_set_com := nil;
   _UPDILIB_cfg_set_device := nil;
+  _UPDILIB_cfg_get_baudrate := nil;
+  _UPDILIB_cfg_get_com      := nil;
+  _UPDILIB_cfg_get_device   := nil;
   _UPDILIB_devices_get_count := nil;
   _UPDILIB_devices_get_name := nil;
   _UPDILIB_devices_get_fuses_cnt := nil;

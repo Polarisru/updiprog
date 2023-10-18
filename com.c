@@ -124,7 +124,7 @@ UPDI_COM_port* COM_Open(char *port, uint32_t baudrate, bool have_parity, bool tw
   SerialPortSettings.c_cflag |= (CREAD | CLOCAL); /* Enable receiver,Ignore Modem Control lines       */
   SerialPortSettings.c_cflag &= ~ICANON;
   SerialPortSettings.c_cc[VMIN]  = 0;            // read doesn't block
-  SerialPortSettings.c_cc[VTIME] = 50;            // 5 seconds read timeout
+  SerialPortSettings.c_cc[VTIME] = 5;            // 0.5 seconds read timeout
   tcsetattr(res->fd, TCSANOW, &SerialPortSettings);  /* Set the attributes to the termios structure*/
   tcflush(res->fd, TCIFLUSH);
   #endif

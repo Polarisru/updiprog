@@ -366,88 +366,151 @@ begin
   end;
 end;
 
-var
-  c1 : PByte;
-  c2 : PByte;
-  i1, i2 : int32;
+function HexToByte(c : PByte) : Byte;
+begin
+  case char(c^) of
+  '0'..'9': Result := c^ - ord('0');
+  'A'..'F': Result := c^ - ord('A') + 10;
+  end;
+  Result := (Result shl 4) and $f0;
+  inc(c);
+  case char(c^) of
+  '0'..'9': Result := Result or (c^ - ord('0'));
+  'A'..'F': Result := Result or (c^ - ord('A') + 10);
+  end;
+end;
 
-  bc   : Byte;
+function HexToWord(c : PByte) : Word;
+var
+  b1, b2 : Byte;
+begin
+  b1 := HexToByte(c);
+  inc(c, 2);
+  b2 := HexToByte(c);
+  Result := (b1 shl 8) and $ff00 or b2
+end;
+
+function ConvertToRaw(src, dst : PByte; sz : Int32) : int32;
+var
+  b1   : Word;
+  bc   : Word;
   addr : Word;
   rt   : Byte;
-
+  i, j : int32;
   st   : Byte;
+
+  dstloc : PByte;
 
   ok, finish : boolean;
 begin
-  c1 := PByte(d1);
-  c2 := PByte(d2);
-
-  i1 := 0;
-  i2 := 0;
-
+  Result := 0;
+  i := 0;
   ok := true;
   finish := false;
   st := 0;
-  while (i1 < d1sz) and (i2 < d2sz) and (ok) and (not finish) do
+  while (i < sz) and ok and (not finish) do
   begin
     case st of
     0: begin
-        SkipToStartCode(c1, i1, d1sz);
-        SkipToStartCode(c2, i2, d2sz);
+        SkipToStartCode(src, i, sz);
         inc(st);
-        Continue;
       end;
     1: begin
-        inc(st);
+        Inc(src);
+        inc(i);
+        Inc(st);
       end;
     2: begin
-        ok := c1^ = c2^;
-        if ok then
-          bc := c1^ + 1;
-        inc(st);
-      end;
-    3: begin
-        ok := ((d1sz - i1) >= 2) and ((d2sz - i2) >= 2);
+        ok := ((sz - i) >= 2);
         if ok then
         begin
-          ok := PWord(c1)^ = PWord(c2)^;
-          if ok then
-            addr := PWord(c1)^;
+          b1 := HexToByte(src);
+          bc := b1 shl 1;
+          Inc(src, 2);
+          inc(i, 2);
+          inc(st);
+        end;
+      end;
+    3: begin
+        ok := ((sz - i) >= 4);
+        if ok then
+        begin
+          addr := HexToWord(src);
+          Inc(src, 4);
+          inc(i, 4);
           inc(st);
         end;
       end;
     4: begin
-        ok := c1^ = c2^;
-        if ok then
-          rt := c1^;
-        inc(st);
-      end;
-    5: begin
-        ok := ((d1sz - i1) >= bc) and ((d2sz - i2) >= bc);
+        ok := ((sz - i) >= 2);
         if ok then
         begin
-          ok := CompareByte(c1, c2, bc) = 0;
+          rt := HexToByte(src);
+          Inc(src, 2);
+          inc(i, 2);
+          inc(st);
+        end;
+      end;
+    5: begin
+        ok := (sz - i) >= (bc + 2);
+        if ok then
+        begin
+          if ok and (bc = 0) and (addr = 0) and (rt = 1) then
+            finish := true
+          else
+          if rt = 0 then
+          begin
+            Result := addr + (bc shr 1);
+            dstloc := @(dst[addr]);
+            // copy data
+            j := 0;
+            while j < bc do
+            begin
+              dstloc^ := HexToByte(src);
+              Inc(src, 2);
+              Inc(j, 2);
+              Inc(dstloc)
+            end;
+          end;
 
-          if ok and (bc = 1) and (addr = 0) and (rt = 1) then
-            finish := true;
-
-          Inc(c1, bc);
-          inc(i1, bc);
-          Inc(c2, bc);
-          inc(i2, bc);
+          inc(src, 2); // pass crc
+          inc(i, bc + 2);
           st := 0;
-          Continue;
         end;
       end;
     end;
-
-    Inc(c1);
-    inc(i1);
-    Inc(c2);
-    inc(i2);
   end;
+end;
 
-  Result := ok and finish;
+var
+  c1 : PByte;
+  c2 : PByte;
+
+  sz1, sz2, s, i : Integer;
+  buf1, buf2 : PByte;
+begin
+  c1 := PByte(d1);
+  c2 := PByte(d2);
+
+  buf1 := GetMem(cDEV_FLASH_SIZE_MAX);
+  buf2 := GetMem(cDEV_FLASH_SIZE_MAX);
+  try
+    FillByte(buf1^, cDEV_FLASH_SIZE_MAX, $ff);
+    FillByte(buf2^, cDEV_FLASH_SIZE_MAX, $ff);
+
+    sz1 := ConvertToRaw(c1, buf1, d1sz);
+    sz2 := ConvertToRaw(c2, buf2, d2sz);
+
+    if sz1 > sz2 then
+      s := sz2
+    else
+      s := sz1;
+
+    Result := CompareByte(buf1^, buf2^, s) = 0;
+  finally
+    FreeMem(buf1);
+    FreeMem(buf2);
+  end;
 end;
 
 procedure log_onlog(ud: Pointer; level: int32; const src, msg: pansichar) cdecl;
@@ -855,13 +918,16 @@ begin
     FusesGrid.Cells[2,0] := 'New';
 
     RefreshPortsList;
-
   end else
     LogOut(SFailedToLoadUPDILib);
+
+  Timer1.Enabled := true;
 end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
 begin
+  Timer1.Enabled := false;
+
   if assigned(wrk) then
   begin
     wrk.WaitFor;
@@ -1233,6 +1299,8 @@ begin
     if loglist.Count > 0 then
     begin
       Log.Lines.AddStrings(loglist);
+      Log.SelStart:=Length(Log.lines.Text);
+      Log.VertScrollBar.Position:=1000000;
       loglist.Clear;
     end;
   finally

@@ -22,9 +22,9 @@ object Form1: TForm1
     TabOrder = 0
     object DevicesComboBox: TComboBox
       Left = 12
-      Height = 33
+      Height = 35
       Top = 88
-      Width = 164
+      Width = 157
       ItemHeight = 0
       OnChange = DevicesComboBoxChange
       OnSelect = DevicesComboBoxSelect
@@ -33,23 +33,23 @@ object Form1: TForm1
     end
     object Label1: TLabel
       Left = 12
-      Height = 17
+      Height = 19
       Top = 64
-      Width = 84
+      Width = 75
       Caption = 'Device name'
       ParentColor = False
     end
     object Label2: TLabel
       Left = 12
-      Height = 17
+      Height = 19
       Top = 0
-      Width = 30
+      Width = 26
       Caption = 'Port'
       ParentColor = False
     end
     object PortComboBox: TComboBox
       Left = 12
-      Height = 33
+      Height = 35
       Top = 24
       Width = 316
       ItemHeight = 0
@@ -71,10 +71,10 @@ object Form1: TForm1
       ParentShowHint = False
     end
     object EraseDeviceButton: TSpeedButton
-      Left = 176
+      Left = 169
       Height = 32
       Hint = 'Erase Device'
-      Top = 87
+      Top = 88
       Width = 32
       Images = ImageList1
       ImageIndex = 1
@@ -88,7 +88,7 @@ object Form1: TForm1
       Top = 128
       Width = 153
       Caption = 'Fuses'
-      ClientHeight = 206
+      ClientHeight = 204
       ClientWidth = 151
       TabOrder = 2
       object FusesGrid: TStringGrid
@@ -132,12 +132,12 @@ object Form1: TForm1
       Top = 128
       Width = 325
       Caption = 'Memory'
-      ClientHeight = 206
+      ClientHeight = 204
       ClientWidth = 323
       TabOrder = 3
       object InputHEXFile: TFileNameEdit
         Left = 8
-        Height = 34
+        Height = 36
         Top = 24
         Width = 304
         Filter = 'Hex file|*.hex'
@@ -153,7 +153,7 @@ object Form1: TForm1
         Left = 8
         Height = 23
         Top = 120
-        Width = 254
+        Width = 228
         Caption = 'Erase Device Before Programming'
         TabOrder = 1
       end
@@ -161,7 +161,7 @@ object Form1: TForm1
         Left = 8
         Height = 23
         Top = 144
-        Width = 247
+        Width = 218
         Caption = 'Verify Device After Programming'
         OnChange = VerifyDeviceCheckBoxChange
         TabOrder = 2
@@ -195,16 +195,16 @@ object Form1: TForm1
       end
       object Label3: TLabel
         Left = 8
-        Height = 17
+        Height = 19
         Top = 4
-        Width = 147
+        Width = 129
         Caption = 'File to read/save flash'
         ParentColor = False
       end
     end
     object BaudComboBox: TComboBox
       Left = 368
-      Height = 29
+      Height = 31
       Top = 25
       Width = 133
       ItemHeight = 0
@@ -224,23 +224,23 @@ object Form1: TForm1
     end
     object Label4: TLabel
       Left = 368
-      Height = 17
+      Height = 19
       Top = 0
-      Width = 62
+      Width = 55
       Caption = 'Baudrate'
       ParentColor = False
     end
     object Label5: TLabel
       Left = 248
-      Height = 17
+      Height = 19
       Top = 64
-      Width = 60
+      Width = 52
       Caption = 'Device id'
       ParentColor = False
     end
     object DevIdText: TEdit
       Left = 248
-      Height = 34
+      Height = 36
       Top = 87
       Width = 80
       ReadOnly = True
@@ -248,7 +248,7 @@ object Form1: TForm1
     end
     object DeviceSNText: TEdit
       Left = 336
-      Height = 34
+      Height = 36
       Top = 88
       Width = 165
       ReadOnly = True
@@ -256,17 +256,17 @@ object Form1: TForm1
     end
     object Label6: TLabel
       Left = 336
-      Height = 17
+      Height = 19
       Top = 64
-      Width = 72
+      Width = 63
       Caption = 'Device S/N'
       ParentColor = False
     end
     object DeviceInfoButton: TSpeedButton
-      Left = 208
+      Left = 202
       Height = 32
       Hint = 'Erase Device'
-      Top = 87
+      Top = 88
       Width = 32
       Images = ImageList1
       ImageIndex = 2
@@ -304,8 +304,10 @@ object Form1: TForm1
       BorderSpacing.Around = 12
       Font.Name = 'Monospace'
       ParentFont = False
-      ScrollBars = ssAutoBoth
+      ReadOnly = True
+      ScrollBars = ssBoth
       TabOrder = 1
+      WordWrap = False
     end
   end
   object ImageList1: TImageList

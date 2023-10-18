@@ -35,7 +35,7 @@ uint16_t DEVICES_GetFlashLength(int8_t id);
 uint16_t DEVICES_GetFlashStart(int8_t id);
 uint16_t DEVICES_GetPageSize(int8_t id);
 uint16_t DEVICES_GetNvmctrlAddress(int8_t id);
-uint16_t DEVICES_GetGigRowAddress(int8_t id);
+uint16_t DEVICES_GetSigRowAddress(int8_t id);
 uint16_t DEVICES_GetFusesAddress(int8_t id);
 uint8_t  DEVICES_GetFusesNumber(int8_t id);
 uint8_t  DEVICES_GetNumber(void);
