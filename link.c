@@ -3,6 +3,7 @@
 #include "log.h"
 #include "phy.h"
 #include "updi.h"
+#include "msgs.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -22,7 +23,7 @@ uint8_t LINK_ldcs(UPDI_APP* app,uint8_t address)
   uint8_t response = 0;
   uint8_t buf[] = {UPDI_PHY_SYNC, UPDI_LDCS | (address & 0x0F)};
 
-  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "LDCS from 0x%02X", address);
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, MSG_LDCS, address);
   PHY_Send(app->port, buf, sizeof(buf));
   PHY_Receive(app->port, &response, 1);
   return response;
@@ -40,7 +41,7 @@ void LINK_stcs(UPDI_APP* app,uint8_t address, uint8_t value)
   //Store a value to Control/Status space
   uint8_t buf[] = {UPDI_PHY_SYNC, UPDI_STCS | (address & 0x0F), value};
 
-  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "STCS to 0x%02X", address);
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, MSG_STCS, address);
   PHY_Send(app->port, buf, sizeof(buf));
 }
 
@@ -56,10 +57,10 @@ bool LINK_Check(UPDI_APP* app)
   //Check UPDI by loading CS STATUSA
   if (LINK_ldcs(app, UPDI_CS_STATUSA) != 0)
   {
-    LOG_Print(app->logger, LOG_LEVEL_INFO, "UPDI init OK");
+    LOG_Print(app->logger, LOG_LEVEL_INFO, MSG_UPDI_INIT_OK);
     return true;
   }
-  LOG_Print(app->logger, LOG_LEVEL_WARNING, "UPDI not OK - reinitialisation required");
+  LOG_Print(app->logger, LOG_LEVEL_WARNING, MSG_UPDI_INIT_NOT_OK);
   return false;
 }
 
@@ -103,7 +104,7 @@ bool LINK_Init(UPDI_APP* app, char *port, uint32_t baudrate, bool onDTR)
     //Send double break if all is not well, and re-check
     if (PHY_DoBreak(&(app->port)) == false)
     {
-      LOG_Print(app->logger, LOG_LEVEL_ERROR, "UPDI initialization failed");
+      LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_UPDI_INIT_FAILED);
       return false;
     }
     if ((app->port = PHY_Init(port, baudrate, onDTR)) == NULL)
@@ -125,7 +126,7 @@ uint8_t LINK_ld(UPDI_APP* app, uint16_t address)
   uint8_t response;
   uint8_t buf[] = {UPDI_PHY_SYNC, UPDI_LDS | UPDI_ADDRESS_16 | UPDI_DATA_8, address & 0xFF, (address >> 8) & 0xFF};
 
-  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "LD from 0x%04X", address);
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, MSG_LD, address);
   PHY_Send(app->port, buf, sizeof(buf));
   PHY_Receive(app->port, &response, 1);
   return response;
@@ -144,7 +145,7 @@ uint16_t LINK_ld16(UPDI_APP* app, uint16_t address)
   uint16_t response;
   uint8_t buf[] = {UPDI_PHY_SYNC, UPDI_LDS | UPDI_ADDRESS_16 | UPDI_DATA_16, address & 0xFF, (address >> 8) & 0xFF};
 
-  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "LD from 0x%04X", address);
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, MSG_LD, address);
   PHY_Send(app->port, buf, sizeof(buf));
   PHY_Receive(app->port, (uint8_t*)&response, 2);
   return response;
@@ -163,7 +164,7 @@ bool LINK_st(UPDI_APP* app, uint16_t address, uint8_t value)
   uint8_t response;
   uint8_t buf[] = {UPDI_PHY_SYNC, UPDI_STS | UPDI_ADDRESS_16 | UPDI_DATA_8, address & 0xFF, (address >> 8) & 0xFF};
 
-  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "ST to 0x%04X", address);
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, MSG_ST, address);
   PHY_Send(app->port, buf, sizeof(buf));
   PHY_Receive(app->port, &response, 1);
   if (response != UPDI_PHY_ACK)
@@ -190,7 +191,7 @@ bool LINK_st16(UPDI_APP* app, uint16_t address, uint16_t value)
   uint8_t response;
   uint8_t buf[] = {UPDI_PHY_SYNC, UPDI_STS | UPDI_ADDRESS_16 | UPDI_DATA_16, address & 0xFF, (address >> 8) & 0xFF};
 
-  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "ST to 0x%04X", address);
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, MSG_ST, address);
   PHY_Send(app->port, buf, sizeof(buf));
   PHY_Receive(app->port, &response, 1);
   if (response != UPDI_PHY_ACK)
@@ -216,7 +217,7 @@ bool LINK_ld_ptr_inc(UPDI_APP* app, uint8_t *data, uint8_t size)
   //Loads a number of bytes from the pointer location with pointer post-increment
   uint8_t buf[] = {UPDI_PHY_SYNC, UPDI_LD | UPDI_PTR_INC | UPDI_DATA_8};
 
-  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "LD8 from ptr++");
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, MSG_LD8_OFFSET);
   PHY_Send(app->port, buf, sizeof(buf));
 
   return PHY_Receive(app->port, data, size);
@@ -234,7 +235,7 @@ bool LINK_ld_ptr_inc16(UPDI_APP* app, uint8_t *data, uint16_t words)
   //Load a 16-bit word value from the pointer location with pointer post-increment
   uint8_t buf[] = {UPDI_PHY_SYNC, UPDI_LD | UPDI_PTR_INC | UPDI_DATA_16};
 
-  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "LD16 from ptr++");
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, MSG_LD16_OFFSET);
   PHY_Send(app->port, buf, sizeof(buf));
 
   return PHY_Receive(app->port, data, words << 1);
@@ -253,7 +254,7 @@ bool LINK_st_ptr(UPDI_APP* app, uint16_t address)
   uint8_t response;
   uint8_t buf[] = {UPDI_PHY_SYNC, UPDI_ST | UPDI_PTR_ADDRESS | UPDI_DATA_16, address & 0xFF, (address >> 8) & 0xFF};
 
-  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "ST to ptr");
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, MSG_ST_TO_PTR);
   PHY_Send(app->port, buf, sizeof(buf));
   PHY_Receive(app->port, &response, 1);
   if (response != UPDI_PHY_ACK)
@@ -275,7 +276,7 @@ bool LINK_st_ptr_inc(UPDI_APP* app, uint8_t *data, uint16_t len)
   uint16_t n;
   uint8_t buf[] = {UPDI_PHY_SYNC, UPDI_ST | UPDI_PTR_INC | UPDI_DATA_8, data[0]};
 
-  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "ST8 to *ptr++");
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, MSG_ST8_OFFSET);
   PHY_Send(app->port, buf, sizeof(buf));
   PHY_Receive(app->port, &response, 1);
   if (response != UPDI_PHY_ACK)
@@ -301,7 +302,7 @@ bool LINK_st_ptr_inc16(UPDI_APP* app, uint8_t *data, uint16_t len) // length in 
   uint16_t n;
   uint8_t buf[] = {UPDI_PHY_SYNC, UPDI_ST | UPDI_PTR_INC | UPDI_DATA_16, data[0], data[1]};
 
-  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "ST16 to *ptr++");
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, MSG_ST16_OFFSET);
   PHY_Send(app->port, buf, sizeof(buf));
   PHY_Receive(app->port, &response, 1);
   if (response != UPDI_PHY_ACK)
@@ -331,7 +332,7 @@ void LINK_Repeat(UPDI_APP* app, uint16_t repeats)
   //Store a value to the repeat counter
   uint8_t buf[] = {UPDI_PHY_SYNC, UPDI_REPEAT | UPDI_REPEAT_WORD, (repeats - 1) & 0xFF, ((repeats - 1) >> 8) & 0xFF};
 
-  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "Repeat %d", repeats);
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, MSG_REPEAT, repeats);
   PHY_Send(app->port, buf, sizeof(buf));
 }
 
@@ -365,10 +366,10 @@ bool LINK_SendKey(UPDI_APP* app, char *key, uint8_t size)
   uint8_t data[8];
   uint8_t n, i;
 
-  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "Writing key");
+  LOG_Print(app->logger, LOG_LEVEL_VERBOSE, MSG_WRITING_KEY);
   if (strlen(key) != (8 << size))
   {
-    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Invalid KEY length!");
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_INVALID_KEY_LEN);
     return false;
   }
   PHY_Send(app->port, buf, sizeof(buf));

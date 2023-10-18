@@ -252,6 +252,14 @@ uint16_t DEVICES_GetFusesAddress(int8_t id)
     return DEVICES_List[id].fuses_address;
 }
 
+uint16_t DEVICES_GetGigRowAddress(int8_t id)
+{
+  if (id == DEVICE_UNKNOWN_ID)
+    return 0;
+  else
+    return DEVICES_List[id].sigrow_address;
+}
+
 /** \brief Get number of the fuses for selected device
  *
  * \return Number of the fuses as uint8_t

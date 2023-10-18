@@ -22,6 +22,7 @@ typedef struct NVM_raw_data_t {
 bool NVM_EnterProgmode(UPDI_APP *);
 void NVM_LeaveProgmode(UPDI_APP *);
 bool NVM_UnlockDevice(UPDI_APP *);
+bool NVM_GetDeviceInfo(UPDI_APP *);
 bool NVM_ChipErase(UPDI_APP *);
 uint8_t NVM_ReadFuse(UPDI_APP *,uint8_t fusenum);
 bool NVM_WriteFuse(UPDI_APP *,uint8_t fusenum, uint8_t value);

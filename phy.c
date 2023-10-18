@@ -5,6 +5,7 @@
 #include "phy.h"
 #include "updi.h"
 #include "sleep.h"
+#include "msgs.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -37,7 +38,7 @@ bool PHY_DoBreak(UPDI_COM_port ** port)
 {
   uint8_t buf[] = {UPDI_BREAK, UPDI_BREAK};
 
-  LOG_Print_GLOBAL(LOG_LEVEL_INFO, "Sending double break");
+  LOG_Print_GLOBAL(LOG_LEVEL_INFO, MSG_SENDING_DBL_BREAK);
 
   char portname[COMPORT_LEN];
   memcpy(&(portname[0]), &((*port)->port[0]), COMPORT_LEN);
@@ -56,7 +57,7 @@ bool PHY_DoBreak(UPDI_COM_port ** port)
   // Wait for the double break end
   msleep(1000);  // wait for 1 second
   if (COM_Read(*port, buf, 2) != 2)
-    LOG_Print_GLOBAL(LOG_LEVEL_WARNING, "No answer received");
+    LOG_Print_GLOBAL(LOG_LEVEL_WARNING, MSG_NO_ANSWER);
 
   COM_Close(port);
 

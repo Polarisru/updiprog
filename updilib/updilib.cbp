@@ -87,12 +87,9 @@
 		</Unit>
 		<Unit filename="../sleep.h" />
 		<Unit filename="../updi.h" />
+		<Unit filename="libmsgs.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="updilib.h" />
-		<Extensions>
-			<code_completion />
-			<envvars />
-			<debugger />
-		</Extensions>
+		<Extensions />
 	</Project>
 </CodeBlocks_project_file>

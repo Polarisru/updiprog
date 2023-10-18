@@ -7,7 +7,7 @@
 
 #include "com.h"
 #include "log.h"
-#include "sleep.h"
+#include "msgs.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -32,7 +32,7 @@ UPDI_COM_port* COM_Open(char *port, uint32_t baudrate, bool have_parity, bool tw
 
   if (!res) return NULL;
 
-  LOG_Print_GLOBAL(LOG_LEVEL_INFO, "Opening %s at %u baud", port, baudrate);
+  LOG_Print_GLOBAL(LOG_LEVEL_INFO, MSG_OPEN_COM, port, baudrate);
 
   memcpy(&(res->port[0]), port, port_len);
   res->port[port_len] = 0;
@@ -258,7 +258,7 @@ void COM_Close(UPDI_COM_port** port)
   if (!port) return;
   if (!(*port)) return;
 
-  LOG_Print_GLOBAL(LOG_LEVEL_INFO, "Closing COM port %s", (*port)->port);
+  LOG_Print_GLOBAL(LOG_LEVEL_INFO, MSG_CLOSE_COM, (*port)->port);
   #ifdef __MINGW32__
   CloseHandle(port->hSerial);
   #endif

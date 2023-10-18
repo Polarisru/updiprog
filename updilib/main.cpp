@@ -5,8 +5,10 @@
 #include "../devices.h"
 #include "../link.h"
 #include "../log.h"
+#include "../progress.h"
 #include "../nvm.h"
 #include "../phy.h"
+#include "libmsgs.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -19,6 +21,14 @@ DLL_EXPORT UPDI_logger * UPDILIB_logger_init(const char * _src, int32_t _level, 
 
 DLL_EXPORT void UPDILIB_logger_done(UPDI_logger * logger) {
      UPDI_logger_done(logger);
+}
+
+DLL_EXPORT UPDI_progress * UPDILIB_progress_init(UPDI_onprgsstart _onstart, UPDI_onprgs _onstep, UPDI_onprgsfinish _onfinish, void * _ud) {
+     return PROGRESS_Init(_ud, _onstart, _onstep, _onfinish);
+
+}
+DLL_EXPORT void UPDILIB_progress_done(UPDI_progress * _po) {
+    PROGRESS_Done(_po);
 }
 
 DLL_EXPORT UPDI_Params * UPDILIB_cfg_init() {
@@ -61,6 +71,14 @@ DLL_EXPORT UPDI_bool UPDILIB_cfg_set_com(UPDI_Params * cfg, const char * val) {
         memcpy(&(cfg->port[0]), val, len);
         cfg->port[len] = 0;
 
+        return 1;
+    }
+    return 0;
+}
+
+DLL_EXPORT UPDI_bool UPDILIB_cfg_set_progress(UPDI_Params * _cfg, UPDI_progress * _po) {
+    if (_cfg) {
+        _cfg->progress = _po;
         return 1;
     }
     return 0;
@@ -138,7 +156,7 @@ DLL_EXPORT uint8_t UPDILIB_devices_get_fuses_cnt(int8_t _id) {
 
 
 DLL_HIDDEN UPDI_APP * intern_link_to_app(UPDI_Params * _cfg) {
-  UPDI_APP * app = APP_Init(_cfg->logger);
+  UPDI_APP * app = APP_Init(_cfg->logger, _cfg->progress);
 
   if (!app) return NULL;
 
@@ -146,13 +164,13 @@ DLL_HIDDEN UPDI_APP * intern_link_to_app(UPDI_Params * _cfg) {
 
   if (LINK_Init(app, _cfg->port, _cfg->baudrate, false) == false)
   {
-    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Can't open port: %s", _cfg->port);
-    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Please check connection and try again.");
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_CANT_OPEN_PORT, _cfg->port);
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_CHECK_CONNECTION);
     APP_Done(app);
     return NULL;
   }
 
-  LOG_Print(app->logger, LOG_LEVEL_INFO, "Working with device: %s", DEVICES_GetNameByNumber(_cfg->device));
+  LOG_Print(app->logger, LOG_LEVEL_INFO, MSG_WORKING_WITH_DEVICE, DEVICES_GetNameByNumber(_cfg->device));
 
   return app;
 }
@@ -185,6 +203,14 @@ DLL_EXPORT UPDI_bool UPDILIB_read_fuses(UPDI_Params * _cfg, UPDI_fuse * _fuses, 
     UPDI_seq seq [2] = {
         { UPDI_SEQ_ENTER_PM,  NULL, 0 },
         { UPDI_SEQ_GET_FUSES, (void*)_fuses, _cnt },
+    };
+    return UPDILIB_launch_seq(_cfg, seq, 2);
+}
+
+DLL_EXPORT UPDI_bool UPDILIB_read_dev_info(UPDI_Params * _cfg, uint8_t * _data) {
+    UPDI_seq seq [2] = {
+        { UPDI_SEQ_ENTER_PM,  NULL, 0 },
+        { UPDI_SEQ_GET_SIG_ROW, (void*)_data, 0 },
     };
     return UPDILIB_launch_seq(_cfg, seq, 2);
 }
@@ -225,21 +251,19 @@ DLL_EXPORT UPDI_bool UPDILIB_launch_seq(UPDI_Params * _cfg,
         while ((i < _seq_cnt) && break_seq) {
             switch (_seq[i].seq_type) {
             case UPDI_SEQ_LOCK: {
-                LOG_Print(app->logger,  LOG_LEVEL_INFO,  "Locking MCU...   ");
+                LOG_Print(app->logger,  LOG_LEVEL_INFO,  MSG_LOCKING);
                 if (NVM_WriteFuse(app, DEVICE_LOCKBIT_ADDR, 0x00) == true)
-                {
-                  LOG_Print(app->logger,  LOG_LEVEL_INFO,  "OK");
-                } else
+                  LOG_Print(app->logger,  LOG_LEVEL_INFO,  MSG_OK);
+                else
                   break_seq = false;
 
                 break;
             }
             case UPDI_SEQ_UNLOCK: {
-                LOG_Print(app->logger,  LOG_LEVEL_INFO, "Unlocking...   ");
+                LOG_Print(app->logger,  LOG_LEVEL_INFO, MSG_UNLOCKING);
                 if (NVM_UnlockDevice(app) == true)
-                {
-                    LOG_Print(app->logger,  LOG_LEVEL_INFO,  "OK");
-                } else
+                  LOG_Print(app->logger,  LOG_LEVEL_INFO,  MSG_OK);
+                else
                   break_seq = false;
 
                 break;
@@ -247,32 +271,34 @@ DLL_EXPORT UPDI_bool UPDILIB_launch_seq(UPDI_Params * _cfg,
             case UPDI_SEQ_ENTER_PM: {
                 if (NVM_EnterProgmode(app) == false)
                 {
-                    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Can't enter programming mode, exiting");
+                    LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_CANT_ENTER_PROG_MODE);
                     break_seq = false;
                 }
 
                 break;
             }
             case UPDI_SEQ_ERASE: {
-                LOG_Print(app->logger, LOG_LEVEL_INFO, "Erasing");
-                if (!NVM_ChipErase(app))
+                LOG_Print(app->logger, LOG_LEVEL_INFO, MSG_ERASING);
+                if (NVM_ChipErase(app) == true)
+                    LOG_Print(app->logger,  LOG_LEVEL_INFO,  MSG_OK);
+                else
                     break_seq = false;
                 break;
             }
             case UPDI_SEQ_FLASH: {
                 if (!_seq[i].data) {
-                   LOG_Print(app->logger, LOG_LEVEL_ERROR, "Passed NULL data pointer to flash");
+                   LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_WRONG_DATA);
                    break_seq = false;
                    break;
                 }
                 if (_seq[i].data_len <= 0) {
-                   LOG_Print(app->logger, LOG_LEVEL_ERROR, "Passed empty data to flash");
+                   LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_PASSED_EMPTY_DATA);
                    break_seq = false;
                    break;
                 }
 
                 if (break_seq) {
-                    LOG_Print(app->logger, LOG_LEVEL_INFO, "Writing from hex data");
+                    LOG_Print(app->logger, LOG_LEVEL_INFO, MSG_WRITING_FLASH);
 
                     NVM_raw_data data;
                     data.data = (char*)_seq[i].data;
@@ -287,18 +313,18 @@ DLL_EXPORT UPDI_bool UPDILIB_launch_seq(UPDI_Params * _cfg,
             }
             case UPDI_SEQ_READ: {
                 if (!_seq[i].data) {
-                   LOG_Print(app->logger, LOG_LEVEL_ERROR, "Passed NULL data pointer");
+                   LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_WRONG_DATA);
                    break_seq = false;
                    break;
                 }
                 if (_seq[i].data_len <= 0) {
-                   LOG_Print(app->logger, LOG_LEVEL_ERROR, "Passed empty data to read flash");
+                   LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_PASSED_EMPTY_DATA);
                    break_seq = false;
                    break;
                 }
 
                 if (break_seq) {
-                    LOG_Print(app->logger, LOG_LEVEL_INFO, "Reading flash to hex data");
+                    LOG_Print(app->logger, LOG_LEVEL_INFO, MSG_READING_FLASH);
 
                     NVM_raw_data data;
                     data.data = (char*)_seq[i].data;
@@ -314,12 +340,12 @@ DLL_EXPORT UPDI_bool UPDILIB_launch_seq(UPDI_Params * _cfg,
             }
             case UPDI_SEQ_SET_FUSES: {
                 if (!_seq[i].data) {
-                   LOG_Print(app->logger, LOG_LEVEL_ERROR, "Passed NULL data pointer as fuses array");
+                   LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_WRONG_DATA);
                    break_seq = false;
                    break;
                 }
                 if (_seq[i].data_len <= 0) {
-                   LOG_Print(app->logger, LOG_LEVEL_ERROR, "Passed empty fuses array");
+                   LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_PASSED_EMPTY_DATA);
                    break_seq = false;
                    break;
                 }
@@ -328,12 +354,12 @@ DLL_EXPORT UPDI_bool UPDILIB_launch_seq(UPDI_Params * _cfg,
                     UPDI_fuse * _fuses = (UPDI_fuse *)(_seq[i].data);
                     int32_t _cnt = _seq[i].data_len;
 
-                    LOG_Print(app->logger, LOG_LEVEL_INFO, "Writing fuses:");
+                    LOG_Print(app->logger, LOG_LEVEL_INFO, MSG_WRITING_FUSES);
 
                     int fn = 0;
                     while (fn < _cnt)
                     {
-                      LOG_Print(app->logger, LOG_LEVEL_INFO, "Writing 0x%02X to fuse Nr. %d", _fuses[fn].value, _fuses[fn].fuse);
+                      LOG_Print(app->logger, LOG_LEVEL_INFO, MSG_WRITE_FUSE, _fuses[fn].value, _fuses[fn].fuse);
                       NVM_WriteFuse(app, _fuses[fn].fuse, _fuses[fn].value);
                       fn++;
                     }
@@ -343,12 +369,12 @@ DLL_EXPORT UPDI_bool UPDILIB_launch_seq(UPDI_Params * _cfg,
             }
             case UPDI_SEQ_GET_FUSES: {
                 if (!_seq[i].data) {
-                   LOG_Print(app->logger, LOG_LEVEL_ERROR, "Passed NULL data pointer as fuses array");
+                   LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_WRONG_DATA);
                    break_seq = false;
                    break;
                 }
                 if (_seq[i].data_len <= 0) {
-                   LOG_Print(app->logger, LOG_LEVEL_ERROR, "Passed empty fuses array");
+                   LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_PASSED_EMPTY_DATA);
                    break_seq = false;
                    break;
                 }
@@ -357,7 +383,7 @@ DLL_EXPORT UPDI_bool UPDILIB_launch_seq(UPDI_Params * _cfg,
                     UPDI_fuse * _fuses = (UPDI_fuse *)(_seq[i].data);
                     int32_t _cnt = _seq[i].data_len;
 
-                    LOG_Print(app->logger, LOG_LEVEL_INFO, "Reading fuses:");
+                    LOG_Print(app->logger, LOG_LEVEL_INFO, MSG_READING_FUSES);
                     int max_n =  DEVICES_GetFusesNumber(app->DEVICE_Id);
                     int fn = 0;
                     while (fn < _cnt)
@@ -365,7 +391,7 @@ DLL_EXPORT UPDI_bool UPDILIB_launch_seq(UPDI_Params * _cfg,
                       int n = _fuses[fn].fuse;
                       if (n < max_n) {
                           uint8_t x = NVM_ReadFuse(app, n);
-                          LOG_Print(app->logger, LOG_LEVEL_INFO, "  0x%02X: 0x%02X", n, x);
+                          LOG_Print(app->logger, LOG_LEVEL_INFO, MSG_FUSE, n, x);
                           _fuses[fn].value = x;
                       }
                       fn++;
@@ -374,10 +400,27 @@ DLL_EXPORT UPDI_bool UPDILIB_launch_seq(UPDI_Params * _cfg,
 
                 break;
             }
+            case UPDI_SEQ_GET_SIG_ROW: {
+                if (!_seq[i].data) {
+                   LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_WRONG_DATA);
+                   break_seq = false;
+                   break;
+                }
 
+                if (break_seq) {
+                    if (NVM_GetDeviceInfo(app))
+                      memcpy(_seq[i].data, &app->DEVICE_sigrow[0], DEV_INFO_LEN);
+                    else {
+                      memset(_seq[i].data, 0, DEV_INFO_LEN);
+                      break_seq = false;
+                    }
+                }
+
+                break;
+            }
 
             default:
-                LOG_Print(app->logger, LOG_LEVEL_WARNING, "Unknown seq type %d", (int)_seq[i].seq_type);
+                LOG_Print(app->logger, LOG_LEVEL_WARNING, MSG_WRONG_SEQ, (int)_seq[i].seq_type);
                 break_seq = false;
                 break;
             }

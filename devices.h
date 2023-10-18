@@ -30,15 +30,16 @@ typedef struct
 
 extern tDevice DEVICES_List[];
 
-int8_t DEVICES_GetId(const char *name);
+int8_t   DEVICES_GetId(const char *name);
 uint16_t DEVICES_GetFlashLength(int8_t id);
 uint16_t DEVICES_GetFlashStart(int8_t id);
 uint16_t DEVICES_GetPageSize(int8_t id);
 uint16_t DEVICES_GetNvmctrlAddress(int8_t id);
+uint16_t DEVICES_GetGigRowAddress(int8_t id);
 uint16_t DEVICES_GetFusesAddress(int8_t id);
-uint8_t DEVICES_GetFusesNumber(int8_t id);
-uint8_t DEVICES_GetNumber(void);
-char *DEVICES_GetNameByNumber(uint8_t number);
+uint8_t  DEVICES_GetFusesNumber(int8_t id);
+uint8_t  DEVICES_GetNumber(void);
+char *   DEVICES_GetNameByNumber(uint8_t number);
 
 #ifdef __cplusplus
 }

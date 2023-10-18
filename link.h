@@ -16,6 +16,7 @@ void LINK_stcs(UPDI_APP*,uint8_t address, uint8_t value);
 bool LINK_Init(UPDI_APP*,char *port, uint32_t baudrate, bool onDTR);
 bool LINK_SendKey(UPDI_APP*,char *key, uint8_t size);
 uint8_t LINK_ld(UPDI_APP*,uint16_t address);
+uint8_t LINK_ld16(UPDI_APP*,uint16_t address);
 bool LINK_st(UPDI_APP*,uint16_t address, uint8_t value);
 bool LINK_st16(UPDI_APP*,uint16_t address, uint16_t value);
 void LINK_Repeat(UPDI_APP*,uint16_t repeats);

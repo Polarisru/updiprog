@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Buttons,
-  EditBtn, Grids,
+  EditBtn, Grids, ExtCtrls, ComCtrls,
 {$IFNDEF MSWINDOWS}
   {$IFNDEF NO_LIBC}
   Libc,
@@ -27,30 +27,64 @@ uses
 
 type
 
+  TOnLogEvent = procedure (const aStr : String) of object;
+
+  { TUPDIWorkingThread }
+
+  TUPDIWorkingThread = class(TThread)
+  private
+    Fcfg : pUPDI_Params;
+    FOnLog : TOnLogEvent;
+    FOnFinish : TThreadMethod;
+    FSuccess: Boolean;
+  public
+    constructor Create(aCfg : pUPDI_Params; aOnFinish : TThreadMethod);
+    procedure Execute; override;
+
+    procedure LogOut(const Str : String);
+
+    property cfg : pUPDI_Params read Fcfg;
+    property Success : Boolean read FSuccess write FSuccess;
+    property OnLog : TOnLogEvent read FOnLog write FOnLog;
+  end;
+
   { TForm1 }
 
   TForm1 = class(TForm)
-    Label3 : TLabel;
-    ReadFuses : TButton;
-    WriteFuses : TButton;
-    FusesGrid : TStringGrid;
-    VerifyButton : TButton;
-    FlashButton : TButton;
-    EraseDeviceCheckBox : TCheckBox;
+    BaudComboBox: TComboBox;
     DevicesComboBox: TComboBox;
-    PortComboBox: TComboBox;
-    VerifyDeviceCheckBox : TCheckBox;
-    InputHEXFile : TFileNameEdit;
-    FusesBox : TGroupBox;
-    MemoryBox : TGroupBox;
-    ImageList1 : TImageList;
+    DevIdText: TEdit;
+    DeviceSNText: TEdit;
+    EraseDeviceButton: TSpeedButton;
+    DeviceInfoButton: TSpeedButton;
+    EraseDeviceCheckBox: TCheckBox;
+    FlashButton: TButton;
+    FusesBox: TGroupBox;
+    FusesGrid: TStringGrid;
+    ImageList1: TImageList;
+    InputHEXFile: TFileNameEdit;
     Label1: TLabel;
     Label2: TLabel;
+    Label3: TLabel;
+    Label4: TLabel;
+    Label5: TLabel;
+    Label6: TLabel;
     Log: TMemo;
-    RefreshTTYButton : TSpeedButton;
-    EraseDeviceButton : TSpeedButton;
-    ReadButton : TButton;
+    MemoryBox: TGroupBox;
+    Panel1: TPanel;
+    Panel2: TPanel;
+    PortComboBox: TComboBox;
+    ProgressBar1: TProgressBar;
+    ReadButton: TButton;
+    ReadFuses: TButton;
+    RefreshTTYButton: TSpeedButton;
+    Timer1: TTimer;
+    VerifyButton: TButton;
+    VerifyDeviceCheckBox: TCheckBox;
+    WriteFuses: TButton;
     procedure Button1Click(Sender: TObject);
+    procedure BaudComboBoxSelect(Sender: TObject);
+    procedure DeviceInfoButtonClick(Sender: TObject);
     procedure DevicesComboBoxChange(Sender: TObject);
     procedure DevicesComboBoxSelect(Sender: TObject);
     procedure EraseDeviceButtonClick(Sender : TObject);
@@ -62,6 +96,8 @@ type
     procedure InputHEXFileChange(Sender : TObject);
     procedure PortComboBoxChange(Sender : TObject);
     procedure PortComboBoxSelect(Sender: TObject);
+    procedure Timer1Timer(Sender: TObject);
+    procedure VerifyButtonClick(Sender: TObject);
     procedure VerifyDeviceCheckBoxChange(Sender : TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -71,20 +107,104 @@ type
     procedure WriteFusesClick(Sender : TObject);
   private
     loclogger : pUPDI_logger;
+    locprgs   : pUPDI_progress;
     cfg       : pUPDI_Params;
+    wrk       : TUPDIWorkingThread;
+    logmutex  : TRTLCriticalSection;
+    prgsmutex : TRTLCriticalSection;
+    inprogress: Boolean;
+    prgtotal, prgpos : integer;
+    loglist   : TStringList;
+
+    procedure LockLog;
+    procedure UnLockLog;
+    procedure LockProgress;
+    procedure UnLockProgress;
+
+    procedure OnStopUPDIThread;
+    procedure OnReadWriteFuses;
+    procedure OnReadDevInfoFuses;
   public
-    function FuseState(pos : integer) : Byte;
+    procedure LaunchUPDIThread(awrk : TUPDIWorkingThread);
+    function  FuseState(pos : integer) : Byte;
     procedure ConsumeFuses(fuses : pUPDI_fuse; cnt : integer);
+    procedure ConsumeDevInfo(devinfo : pByte);
     procedure RefreshPortsList;
     procedure LogOut(const Str : String);
+    procedure ProgressStart(total : uint16);
+    procedure ProgressStep(pos, total : uint16);
+    procedure ProgressFinish(pos, total : uint16);
+  end;
+
+  { TUPDIReadDevInfoThread }
+
+  TUPDIReadDevInfoThread = class(TUPDIWorkingThread)
+  public
+    devinfo : array [0..DEV_INFO_LEN-1] of Byte;
+    procedure Execute; override;
+  end;
+
+  { TUPDIReadFusesThread }
+
+  TUPDIReadFusesThread = class(TUPDIWorkingThread)
+  public
+    fuses : pUPDI_fuse;
+    cnt : integer;
+    procedure Execute; override;
+    destructor Destroy; override;
+  end;
+
+  { TUPDIWriteFusesThread }
+
+  TUPDIWriteFusesThread = class(TUPDIReadFusesThread)
+  private
+    seq : pUPDI_seq;
+  public
+    constructor Create(aCfg : pUPDI_Params; aOnFinish : TThreadMethod;
+                            aseq : pUPDI_seq;
+                            afuses : pUPDI_fuse;
+                            acnt : integer);
+    procedure Execute; override;
+    destructor Destroy; override;
+  end;
+
+  { TUPDIReadFlashThread }
+
+  TUPDIReadFlashThread = class(TUPDIWorkingThread)
+  private
+    FN : String;
+  public
+    constructor Create(aCfg : pUPDI_Params; aOnFinish : TThreadMethod;
+                              const aFN : String);
+    procedure Execute; override;
+  end;
+
+  { TUPDIWriteFlashThread }
+
+  TUPDIWriteFlashThread = class(TUPDIReadFlashThread)
+  private
+    Erase, Verify : Boolean;
+  public
+    constructor Create(aCfg: pUPDI_Params; aOnFinish: TThreadMethod;
+                             const aFN: String; aerase, averify: boolean);
+    procedure Execute; override;
+  end;
+
+  { TUPDIVerifyFlashThread }
+
+  TUPDIVerifyFlashThread = class(TUPDIReadFlashThread)
+  public
+    procedure Execute; override;
   end;
 
 var
   Form1: TForm1;
 
 resourcestring
-  sOKString = 'Ok';
+  sOKString = 'OK';
   sYouShouldSpecifyCorr = 'You should specify correct file name';
+  sWritingHexDataToFile = 'Writing hex data to %s';
+  sReadingHexDataFromFile = 'Reading hex data from %s';
   sFileSIsNotExists = 'File %s is not exists';
   sFileSExistsRewrite = 'File %s exists. Rewrite?';
   sHEXFileIsEmpty = 'HEX file is empty';
@@ -232,9 +352,444 @@ begin
 end;
 {$ENDIF}
 
+function CompareIntelHex(d1 : pointer; d1sz : int32;
+                         d2 : pointer; d2sz : int32) : Boolean;
+
+procedure SkipToStartCode(var c : PByte; var i : integer; sz : integer);
+begin
+  while (i < sz) do
+  begin
+    if chr(c^) = ':' then
+      break;
+    Inc(c);
+    inc(i);
+  end;
+end;
+
+var
+  c1 : PByte;
+  c2 : PByte;
+  i1, i2 : int32;
+
+  bc   : Byte;
+  addr : Word;
+  rt   : Byte;
+
+  st   : Byte;
+
+  ok, finish : boolean;
+begin
+  c1 := PByte(d1);
+  c2 := PByte(d2);
+
+  i1 := 0;
+  i2 := 0;
+
+  ok := true;
+  finish := false;
+  st := 0;
+  while (i1 < d1sz) and (i2 < d2sz) and (ok) and (not finish) do
+  begin
+    case st of
+    0: begin
+        SkipToStartCode(c1, i1, d1sz);
+        SkipToStartCode(c2, i2, d2sz);
+        inc(st);
+        Continue;
+      end;
+    1: begin
+        inc(st);
+      end;
+    2: begin
+        ok := c1^ = c2^;
+        if ok then
+          bc := c1^ + 1;
+        inc(st);
+      end;
+    3: begin
+        ok := ((d1sz - i1) >= 2) and ((d2sz - i2) >= 2);
+        if ok then
+        begin
+          ok := PWord(c1)^ = PWord(c2)^;
+          if ok then
+            addr := PWord(c1)^;
+          inc(st);
+        end;
+      end;
+    4: begin
+        ok := c1^ = c2^;
+        if ok then
+          rt := c1^;
+        inc(st);
+      end;
+    5: begin
+        ok := ((d1sz - i1) >= bc) and ((d2sz - i2) >= bc);
+        if ok then
+        begin
+          ok := CompareByte(c1, c2, bc) = 0;
+
+          if ok and (bc = 1) and (addr = 0) and (rt = 1) then
+            finish := true;
+
+          Inc(c1, bc);
+          inc(i1, bc);
+          Inc(c2, bc);
+          inc(i2, bc);
+          st := 0;
+          Continue;
+        end;
+      end;
+    end;
+
+    Inc(c1);
+    inc(i1);
+    Inc(c2);
+    inc(i2);
+  end;
+
+  Result := ok and finish;
+end;
+
 procedure log_onlog(ud: Pointer; level: int32; const src, msg: pansichar) cdecl;
 begin
   TForm1(ud).LogOut(StrPas(src) + ': ' +StrPas(msg));
+end;
+
+procedure prgs_onstep(ud: pointer; pos, total:  uint16) cdecl;
+begin
+  TForm1(ud).ProgressStep(pos, total);
+end;
+
+procedure prgs_onstart(ud: pointer; total:  uint16) cdecl;
+begin
+  TForm1(ud).ProgressStart(total);
+end;
+
+procedure prgs_onstop(ud: pointer; pos, total: uint16) cdecl;
+begin
+  TForm1(ud).ProgressFinish(pos, total);
+end;
+
+{ TUPDIVerifyFlashThread }
+
+procedure TUPDIVerifyFlashThread.Execute;
+ var
+   F : TFileStream;
+   sz : Int32;
+   buffer, rbuffer : Pointer;
+   seq : Array [0..1] of UPDI_seq;
+ begin
+   try
+     try
+       F := TFileStream.Create(FN, fmOpenRead);
+       try
+         LogOut(Format(sReadingHexDataFromFile, [FN]));
+         buffer := GetMem(cDEV_FLASH_SIZE_MAX);
+         if assigned(buffer) then
+         try
+           sz := cDEV_FLASH_SIZE_MAX;
+           sz := F.Read(buffer^, sz);
+
+           if sz > 0 then
+           begin
+             LogOut(sOKString);
+
+             seq[0].seq_type := UPDI_SEQ_ENTER_PM;
+
+             rbuffer := GetMem(cDEV_FLASH_SIZE_MAX);
+             with seq[1] do
+             begin
+               seq_type := UPDI_SEQ_READ;
+               data := rbuffer;
+               data_len := cDEV_FLASH_SIZE_MAX;
+             end;
+
+             try
+               if UPDILIB_launch_seq(cfg, @(seq), 2) > 0 then
+               begin
+                 if CompareIntelHex(buffer,
+                                    sz,
+                                    seq[1].data,
+                                    seq[1].data_len) then
+                   LogOut(sVerifyOK)
+                 else
+                   LogOut(sVerifyFail);
+               end else
+                 Exit;
+             finally
+               if assigned(rbuffer) then
+                 Freemem(rbuffer);
+             end;
+           end else
+           begin
+             LogOut(sHEXFileIsEmpty);
+             Exit;
+           end;
+         finally
+           Freemem(buffer);
+         end else
+           LogOut(sNotEnoughtMemoryCant);
+       finally
+         F.Free;
+       end;
+     except
+       on E : Exception do
+       begin
+         LogOut(e.Message);
+       end;
+     end;
+   finally
+     if Assigned(FOnFinish) then
+       Synchronize(FOnFinish);
+   end;
+end;
+
+{ TUPDIReadDevInfoThread }
+
+procedure TUPDIReadDevInfoThread.Execute;
+begin
+  try
+    Success := UPDILIB_read_dev_info(cfg, @(devinfo[0])) > 0;
+  finally
+    inherited Execute;
+  end;
+end;
+
+{ TUPDIWriteFlashThread }
+
+constructor TUPDIWriteFlashThread.Create(aCfg: pUPDI_Params;
+  aOnFinish: TThreadMethod; const aFN: String; aerase, averify : boolean);
+begin
+  inherited Create(aCfg, aOnFinish, aFN);
+  Erase := aerase;
+  Verify := averify;
+end;
+
+procedure TUPDIWriteFlashThread.Execute;
+var
+  F : TFileStream;
+  sz : Int32;
+  buffer, rbuffer : Pointer;
+  seq : Array [0..3] of UPDI_seq;
+  seq_len, rloc, wloc : integer;
+begin
+  try
+    try
+      F := TFileStream.Create(FN, fmOpenRead);
+      try
+        LogOut(Format(sReadingHexDataFromFile, [FN]));
+        buffer := GetMem(cDEV_FLASH_SIZE_MAX);
+        if assigned(buffer) then
+        try
+          sz := cDEV_FLASH_SIZE_MAX;
+          sz := F.Read(buffer^, sz);
+
+          if sz > 0 then
+          begin
+            LogOut(sOKString);
+
+            seq_len := 1;
+            seq[0].seq_type := UPDI_SEQ_ENTER_PM;
+
+            if Erase then
+            begin
+              seq[1].seq_type := UPDI_SEQ_ERASE;
+              inc(seq_len);
+            end;
+
+            with seq[seq_len] do
+            begin
+              seq_type := UPDI_SEQ_FLASH;
+              data := buffer;
+              data_len := sz;
+            end;
+            wloc := seq_len;
+            inc(seq_len);
+
+            if Verify then
+            begin
+              rbuffer := GetMem(cDEV_FLASH_SIZE_MAX);
+              with seq[seq_len] do
+              begin
+                seq_type := UPDI_SEQ_READ;
+                data := rbuffer;
+                data_len := cDEV_FLASH_SIZE_MAX;
+              end;
+              rloc := seq_len;
+              inc(seq_len);
+            end else begin
+              rloc := -1;
+              rbuffer := nil;
+            end;
+
+            try
+              if UPDILIB_launch_seq(cfg, @(seq), seq_len) > 0 then
+              begin
+                if Verify and (rloc > 0) then
+                begin
+                  if CompareIntelHex(seq[wloc].data,
+                                     seq[wloc].data_len,
+                                     seq[rloc].data,
+                                     seq[rloc].data_len) then
+                    LogOut(sVerifyOK)
+                  else
+                    LogOut(sVerifyFail);
+                end;
+              end else
+                Exit;
+            finally
+              if assigned(rbuffer) then
+                Freemem(rbuffer);
+            end;
+          end else
+          begin
+            LogOut(sHEXFileIsEmpty);
+            Exit;
+          end;
+        finally
+          Freemem(buffer);
+        end else
+          LogOut(sNotEnoughtMemoryCant);
+      finally
+        F.Free;
+      end;
+    except
+      on E : Exception do
+      begin
+        LogOut(e.Message);
+      end;
+    end;
+  finally
+    if Assigned(FOnFinish) then
+      Synchronize(FOnFinish);
+  end;
+end;
+
+{ TUPDIWriteFusesThread }
+
+constructor TUPDIWriteFusesThread.Create(aCfg: pUPDI_Params;
+  aOnFinish: TThreadMethod; aseq: pUPDI_seq; afuses: pUPDI_fuse;
+  acnt: integer);
+begin
+  inherited Create(aCfg, aOnFinish);
+  Seq := aseq;
+  fuses := afuses;
+  cnt := acnt;
+end;
+
+procedure TUPDIWriteFusesThread.Execute;
+begin
+  try
+    Success := UPDILIB_launch_seq(cfg, seq, 3) > 0;
+  finally
+    if Assigned(FOnFinish) then
+      Synchronize(FOnFinish);
+  end;
+end;
+
+destructor TUPDIWriteFusesThread.Destroy;
+begin
+  if assigned(seq) then
+    FreeMem(seq);
+  inherited Destroy;
+end;
+
+{ TUPDIReadFlashThread }
+
+constructor TUPDIReadFlashThread.Create(aCfg: pUPDI_Params;
+  aOnFinish: TThreadMethod; const aFN: String);
+begin
+  inherited Create(aCfg, aOnFinish);
+  FN := aFN;
+end;
+
+procedure TUPDIReadFlashThread.Execute;
+var
+  F : TFileStream;
+  sz : Int32;
+  buffer : Pointer;
+begin
+  try
+     buffer := GetMem(cDEV_FLASH_SIZE_MAX);
+    try
+      sz := cDEV_FLASH_SIZE_MAX;
+      if UPDILIB_read_hex(cfg, PAnsiChar(buffer), @sz) = 0 then
+        Exit;
+      try
+        LogOut(Format(sWritingHexDataToFile, [FN]));
+        F := TFileStream.Create(FN, fmOpenWrite or fmCreate);
+        try
+          F.Write(buffer^, sz);
+          Success := true;
+        finally
+          F.Free;
+        end;
+      except
+        on E : Exception do
+        begin
+          LogOut(e.Message);
+        end;
+      end;
+    finally
+      Freemem(buffer);
+    end;
+  finally
+    inherited Execute;
+  end;
+end;
+
+{ TUPDIReadFusesThread }
+
+procedure TUPDIReadFusesThread.Execute;
+var
+  i : integer;
+begin
+  fuses := nil;
+  cnt := UPDILIB_devices_get_fuses_cnt(UPDILIB_cfg_get_device(cfg));
+  try
+    if cnt > 0 then
+    begin
+      fuses := pUPDI_fuse(Getmem(sizeof(UPDI_fuse) * cnt));
+      if Assigned(fuses) then
+      begin
+        for i := 0 to cnt-1 do fuses[i].fuse := i;
+        Success := UPDILIB_read_fuses(cfg, fuses, cnt) > 0;
+      end;
+    end;
+  finally
+    inherited Execute;
+  end;
+end;
+
+destructor TUPDIReadFusesThread.Destroy;
+begin
+  if Assigned(fuses) then
+    FreeMem(fuses);
+  inherited Destroy;
+end;
+
+{ TUPDIWorkingThread }
+
+constructor TUPDIWorkingThread.Create(aCfg: pUPDI_Params;
+  aOnFinish: TThreadMethod);
+begin
+  inherited Create(true);
+  FreeOnTerminate := false;
+  Fcfg := aCfg;
+  FOnFinish:= aOnFinish;
+  FSuccess:= false;
+end;
+
+procedure TUPDIWorkingThread.Execute;
+begin
+  if Assigned(FOnFinish) then
+    Synchronize(FOnFinish);
+end;
+
+procedure TUPDIWorkingThread.LogOut(const Str: String);
+begin
+  if Assigned(FOnLog) then
+    FOnLog(Str);
 end;
 
 { TForm1 }
@@ -245,6 +800,9 @@ var
   l : Integer;
   dst : AnsiString;
 begin
+  InitCriticalSection(logmutex);
+  InitCriticalSection(prgsmutex);
+  loglist := TStringList.Create;
   loclogger := nil;
   cfg := nil;
 
@@ -258,13 +816,18 @@ begin
                                                        nil,
                                                        Self);
 
+    locprgs := UPDILIB_progress_init(@prgs_onstart, @prgs_onstep,
+                                                    @prgs_onstop, Self);
+
     SetLength(dst, COMPORT_LEN);
     cfg := UPDILIB_cfg_init();
 
     if Assigned(cfg) then
     begin
       UPDILIB_cfg_set_logger(cfg, loclogger);
-      UPDILIB_cfg_set_buadrate(cfg, 9600);
+      UPDILIB_cfg_set_progress(cfg, locprgs);
+      i := UPDILIB_cfg_get_baudrate(cfg);
+      BaudComboBox.Text := Inttostr(i);
     end;
 
     SetLength(dst, DEVICES_NAME_LEN);
@@ -299,16 +862,32 @@ end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
 begin
+  if assigned(wrk) then
+  begin
+    wrk.WaitFor;
+    FreeAndNil(wrk);
+  end;
+
   if assigned(loclogger) then
   begin
     UPDILIB_logger_done(loclogger);
     loclogger := nil;
+  end;
+  if Assigned(locprgs) then
+  begin
+    UPDILIB_progress_done(locprgs);
+    locprgs := nil;
   end;
   if Assigned(cfg) then
   begin
     UPDILIB_cfg_done(cfg);
     cfg := nil;
   end;
+  loglist.Free;
+
+  DoneCriticalSection(logmutex);
+  DoneCriticalSection(prgsmutex);
+
   if IsUPDILibloaded then
     DestroyUPDILibInterface;
 end;
@@ -316,11 +895,9 @@ end;
 procedure TForm1.ReadButtonClick(Sender : TObject);
 var
   c : Boolean;
-  F : TFileStream;
-  sz : Int32;
-  buffer : Pointer;
 begin
   if not Assigned(cfg) then Exit;
+
 
   if Length(InputHEXFile.FileName) = 0 then
   begin
@@ -335,56 +912,21 @@ begin
 
   end else
     c := true;
+
   if c then
   begin
-    buffer := GetMem(cDEV_FLASH_SIZE_MAX);
-    try
-      sz := cDEV_FLASH_SIZE_MAX;
-      if UPDILIB_read_hex(cfg, PAnsiChar(buffer), @sz) = 0 then
-        Exit;
-      try
-        F := TFileStream.Create(InputHEXFile.FileName, fmOpenWrite or fmCreate);
-        try
-          F.Write(buffer^, sz);
-          LogOut(sOKString);
-        finally
-          F.Free;
-        end;
-      except
-        on E : Exception do
-        begin
-          LogOut(e.Message);
-        end;
-      end;
-    finally
-      Freemem(buffer);
-    end;
+    LaunchUPDIThread(TUPDIReadFlashThread.Create(cfg,
+                                  @OnStopUPDIThread, InputHEXFile.FileName));
   end;
 end;
 
 procedure TForm1.ReadFusesClick(Sender : TObject);
-var
-  fuses : pUPDI_fuse;
-  cnt, i : integer;
 begin
   if Assigned(cfg) then
   begin
     FusesGrid.RowCount := 1;
-    cnt := UPDILIB_devices_get_fuses_cnt(UPDILIB_cfg_get_device(cfg));
-    if cnt > 0 then
-    begin
-      fuses := pUPDI_fuse(Getmem(sizeof(UPDI_fuse) * cnt));
-      if Assigned(fuses) then
-      begin
-        for i := 0 to cnt-1 do fuses[i].fuse := i;
-        try
-          if UPDILIB_read_fuses(cfg, fuses, cnt) > 0 then
-            ConsumeFuses(fuses, cnt);
-        finally
-          Freemem(fuses);
-        end;
-      end;
-    end;
+
+    LaunchUPDIThread(TUPDIReadFusesThread.Create(cfg, @OnReadWriteFuses));
   end;
 end;
 
@@ -395,7 +937,7 @@ end;
 
 procedure TForm1.WriteFusesClick(Sender : TObject);
 var
-  seq : Array [0..2] of UPDI_seq;
+  seq : pUPDI_seq;
   fuses, wfuses : pUPDI_fuse;
   cnt, i, wcnt : integer;
 begin
@@ -408,35 +950,95 @@ begin
       wfuses := @(fuses[cnt]);
       if Assigned(fuses) then
       begin
-        try
-          for i := 0 to cnt-1 do
-            fuses[i].fuse := i;
-          wcnt := 0;
-          for i := 0 to FusesGrid.RowCount-2 do
-          begin
-            if FuseState(i) = 1 then begin
-              wfuses[wcnt].fuse  := strtoint(FusesGrid.Cells[0, i+1]);
-              wfuses[wcnt].value := strtoint('$' + FusesGrid.Cells[2, i+1]);
-              inc(wcnt);
-            end;
+        for i := 0 to cnt-1 do
+          fuses[i].fuse := i;
+        wcnt := 0;
+        for i := 0 to FusesGrid.RowCount-2 do
+        begin
+          if FuseState(i) = 1 then begin
+            wfuses[wcnt].fuse  := strtoint(FusesGrid.Cells[0, i+1]);
+            wfuses[wcnt].value := strtoint('$' + FusesGrid.Cells[2, i+1]);
+            inc(wcnt);
           end;
-          if wcnt > 0 then
-          begin
-            seq[0].seq_type := UPDI_SEQ_ENTER_PM;
-            seq[1].seq_type := UPDI_SEQ_SET_FUSES;
-            seq[1].data := Pointer(wfuses);
-            seq[1].data_len := wcnt;
-            seq[2].seq_type := UPDI_SEQ_GET_FUSES;
-            seq[2].data := Pointer(fuses);
-            seq[2].data_len := cnt;
-            if UPDILIB_launch_seq(cfg, @(seq[0]), 3) > 0 then
-              ConsumeFuses(fuses, cnt);
-          end;
-        finally
-          Freemem(fuses);
         end;
+        if wcnt > 0 then
+        begin
+          seq := pUPDI_seq(GetMem(Sizeof(UPDI_seq) * 3));
+
+          seq[0].seq_type := UPDI_SEQ_ENTER_PM;
+          seq[1].seq_type := UPDI_SEQ_SET_FUSES;
+          seq[1].data := Pointer(wfuses);
+          seq[1].data_len := wcnt;
+          seq[2].seq_type := UPDI_SEQ_GET_FUSES;
+          seq[2].data := Pointer(fuses);
+          seq[2].data_len := cnt;
+
+          LaunchUPDIThread(TUPDIWriteFusesThread.Create(cfg, @OnReadWriteFuses,
+                                                             seq, fuses, cnt));
+        end else
+          Freemem(fuses);
       end;
     end;
+  end;
+end;
+
+procedure TForm1.LockLog;
+begin
+  EnterCriticalSection(logmutex);
+end;
+
+procedure TForm1.UnLockLog;
+begin
+  LeaveCriticalSection(logmutex);
+end;
+
+procedure TForm1.LockProgress;
+begin
+  EnterCriticalSection(prgsmutex);
+end;
+
+procedure TForm1.UnLockProgress;
+begin
+  LeaveCriticalSection(prgsmutex);
+end;
+
+procedure TForm1.OnStopUPDIThread;
+begin
+  Panel1.Enabled := true;
+  ProgressBar1.Visible := false;
+  if wrk.Success then
+    LogOut(sOKString);
+end;
+
+procedure TForm1.OnReadWriteFuses;
+begin
+  with TUPDIReadFusesThread(wrk) do
+  if Success then
+    ConsumeFuses(fuses, cnt);
+  OnStopUPDIThread;
+end;
+
+procedure TForm1.OnReadDevInfoFuses;
+begin
+  with TUPDIReadDevInfoThread(wrk) do
+  if Success then
+    ConsumeDevInfo(@(devinfo[0]));
+  OnStopUPDIThread;
+end;
+
+procedure TForm1.LaunchUPDIThread(awrk: TUPDIWorkingThread);
+begin
+  if Assigned(wrk) then
+  begin
+    wrk.WaitFor;
+    FreeAndNil(wrk);
+  end;
+  if Assigned(awrk) then
+  begin
+    Panel1.Enabled := false;
+    wrk := awrk;
+    wrk.OnLog := @LogOut;
+    wrk.Start;
   end;
 end;
 
@@ -476,6 +1078,22 @@ begin
   end;
 end;
 
+procedure TForm1.ConsumeDevInfo(devinfo: pByte);
+var
+  i : Int32;
+  s : String;
+begin
+  s := '0x';
+  for i := 0 to 2 do
+    s := s + IntToHex(devinfo[i], 2);
+  DevIdText.Text := s;
+
+  s := '0x';
+  for i := 3 to 13 do
+    s := s + IntToHex(devinfo[i], 2);
+  DeviceSNText.Text := s;
+end;
+
 procedure TForm1.RefreshPortsList;
 var
   ports : string;
@@ -487,6 +1105,22 @@ end;
 procedure TForm1.Button1Click(Sender: TObject);
 begin
 
+end;
+
+procedure TForm1.BaudComboBoxSelect(Sender: TObject);
+begin
+  if Assigned(cfg) then
+  begin
+    UPDILIB_cfg_set_buadrate(cfg, strtoint(BaudComboBox.Text));
+  end;
+end;
+
+procedure TForm1.DeviceInfoButtonClick(Sender: TObject);
+begin
+  if Assigned(cfg) then
+  begin
+    LaunchUPDIThread(TUPDIReadDevInfoThread.Create(cfg, @OnReadDevInfoFuses));
+  end;
 end;
 
 procedure TForm1.DevicesComboBoxChange(Sender: TObject);
@@ -519,13 +1153,6 @@ begin
 end;
 
 procedure TForm1.FlashButtonClick(Sender : TObject);
-var
-  v : Boolean;
-  F : TFileStream;
-  sz : Int32;
-  buffer, rbuffer : Pointer;
-  seq : Array [0..3] of UPDI_seq;
-  seq_len, rloc, wloc : integer;
 begin
   if not Assigned(cfg) then Exit;
 
@@ -542,93 +1169,10 @@ begin
 
   end else
   begin
-    try
-      F := TFileStream.Create(InputHEXFile.FileName, fmOpenRead);
-      try
-        buffer := GetMem(cDEV_FLASH_SIZE_MAX);
-        if assigned(buffer) then
-        try
-          sz := cDEV_FLASH_SIZE_MAX;
-          sz := F.Read(buffer^, sz);
-
-          if sz > 0 then
-          begin
-            seq_len := 1;
-            seq[0].seq_type := UPDI_SEQ_ENTER_PM;
-
-            if EraseDeviceCheckBox.Checked then
-            begin
-              seq[1].seq_type := UPDI_SEQ_ERASE;
-              inc(seq_len);
-            end;
-
-            with seq[seq_len] do
-            begin
-              seq_type := UPDI_SEQ_FLASH;
-              data := buffer;
-              data_len := sz;
-            end;
-            wloc := seq_len;
-            inc(seq_len);
-
-            if VerifyDeviceCheckBox.Checked then
-            begin
-              rbuffer := GetMem(cDEV_FLASH_SIZE_MAX);
-              with seq[seq_len] do
-              begin
-                seq_type := UPDI_SEQ_READ;
-                data := rbuffer;
-                data_len := cDEV_FLASH_SIZE_MAX;
-              end;
-              rloc := seq_len;
-              inc(seq_len);
-            end else begin
-              rloc := -1;
-              rbuffer := nil;
-            end;
-
-            try
-              if UPDILIB_launch_seq(cfg, @(seq), seq_len) > 0 then
-              begin
-                if VerifyDeviceCheckBox.Checked and (rloc > 0) then
-                begin
-                  if seq[wloc].data_len <> seq[rloc].data_len then
-                  begin
-                    v := false;
-                  end else
-                  begin
-                    v := CompareMem(seq[wloc].data, seq[rloc].data, seq[rloc].data_len);
-                  end;
-                  if v then
-                    LogOut(sVerifyOK)
-                  else
-                    LogOut(sVerifyFail);
-                end;
-              end else
-                Exit;
-            finally
-              if assigned(rbuffer) then
-                Freemem(rbuffer);
-            end;
-          end else
-          begin
-            LogOut(sHEXFileIsEmpty);
-            Exit;
-          end;
-          LogOut(sOKString);
-        finally
-          Freemem(buffer);
-        end else
-          LogOut(sNotEnoughtMemoryCant);
-      finally
-        F.Free;
-      end;
-    except
-      on E : Exception do
-      begin
-        LogOut(e.Message);
-      end;
-    end;
+    LaunchUPDIThread(TUPDIWriteFlashThread.Create(cfg, @OnStopUPDIThread,
+                                                       InputHEXFile.FileName,
+                                                       EraseDeviceCheckBox.Checked,
+                                                       VerifyDeviceCheckBox.Checked));
   end;
 end;
 
@@ -682,6 +1226,50 @@ begin
   PortComboBoxChange(Sender);
 end;
 
+procedure TForm1.Timer1Timer(Sender: TObject);
+begin
+  LockLog;
+  try
+    if loglist.Count > 0 then
+    begin
+      Log.Lines.AddStrings(loglist);
+      loglist.Clear;
+    end;
+  finally
+    UnLockLog;
+  end;
+  LockProgress;
+  try
+    ProgressBar1.Max := prgtotal;
+    ProgressBar1.Position := prgpos;
+    ProgressBar1.Visible:= inprogress;
+  finally
+    UnLockProgress;
+  end;
+end;
+
+procedure TForm1.VerifyButtonClick(Sender: TObject);
+begin
+  if not Assigned(cfg) then Exit;
+
+  if Length(InputHEXFile.FileName) = 0 then
+  begin
+    MessageDlg(sYouShouldSpecifyCorr, mtError, [mbOK], - 1);
+    exit;
+  end;
+
+  if not FileExists(InputHEXFile.FileName) then
+  begin
+    MessageDlg(Format(sFileSIsNotExists, [InputHEXFile.FileName]),
+                  mtError, [mbOK], -1);
+
+  end else
+  begin
+    LaunchUPDIThread(TUPDIVerifyFlashThread.Create(cfg, @OnStopUPDIThread,
+                                                       InputHEXFile.FileName));
+  end;
+end;
+
 procedure TForm1.VerifyDeviceCheckBoxChange(Sender : TObject);
 begin
 
@@ -689,7 +1277,48 @@ end;
 
 procedure TForm1.LogOut(const Str: String);
 begin
-  Log.Lines.Add(Str);
+  LockLog;
+  try
+    loglist.Add(Str);
+  finally
+    UnLockLog;
+  end;
+end;
+
+procedure TForm1.ProgressStart(total: uint16);
+begin
+  LockProgress;
+  try
+    prgpos := 0;
+    prgtotal := total;
+    inprogress := true;
+  finally
+    UnLockProgress;
+  end;
+end;
+
+procedure TForm1.ProgressStep(pos, total: uint16);
+begin
+  LockProgress;
+  try
+    prgpos := pos;
+    prgtotal := total;
+    inprogress := true;
+  finally
+    UnLockProgress;
+  end;
+end;
+
+procedure TForm1.ProgressFinish(pos, total: uint16);
+begin
+  LockProgress;
+  try
+    prgpos := pos;
+    prgtotal := total;
+    inprogress := false;
+  finally
+    UnLockProgress;
+  end;
 end;
 
 end.

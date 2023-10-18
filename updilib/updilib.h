@@ -6,6 +6,7 @@
 
 #include "../com.h"
 #include "../log.h"
+#include "../progress.h"
 
 #ifdef BUILD_DLL
     #ifdef WIN64
@@ -33,10 +34,11 @@ typedef int8_t UPDI_bool;
 
 typedef struct
 {
-  uint32_t     baudrate;
-  int8_t       device;
-  char         port[COMPORT_LEN];
-  UPDI_logger* logger;
+  uint32_t       baudrate;
+  int8_t         device;
+  char           port[COMPORT_LEN];
+  UPDI_logger*   logger;
+  UPDI_progress* progress;
 } UPDI_Params;
 
 typedef struct
@@ -52,17 +54,21 @@ typedef struct
   int32_t data_len;
 } UPDI_seq;
 
-#define UPDI_SEQ_UNLOCK     1
-#define UPDI_SEQ_ENTER_PM   2
-#define UPDI_SEQ_ERASE      3
-#define UPDI_SEQ_FLASH      4
-#define UPDI_SEQ_READ       5
-#define UPDI_SEQ_SET_FUSES  6
-#define UPDI_SEQ_GET_FUSES  7
-#define UPDI_SEQ_LOCK       8
+#define UPDI_SEQ_UNLOCK      1
+#define UPDI_SEQ_ENTER_PM    2
+#define UPDI_SEQ_ERASE       3
+#define UPDI_SEQ_FLASH       4
+#define UPDI_SEQ_READ        5
+#define UPDI_SEQ_SET_FUSES   6
+#define UPDI_SEQ_GET_FUSES   7
+#define UPDI_SEQ_LOCK        8
+#define UPDI_SEQ_GET_SIG_ROW 9
 
 DLL_EXPORT UPDI_logger * UPDILIB_logger_init(const char *, int32_t, UPDI_onlog, UPDI_onlogfree, void *);
 DLL_EXPORT void UPDILIB_logger_done(UPDI_logger *);
+
+DLL_EXPORT UPDI_progress * UPDILIB_progress_init(UPDI_onprgsstart, UPDI_onprgs, UPDI_onprgsfinish, void *);
+DLL_EXPORT void UPDILIB_progress_done(UPDI_progress *);
 
 DLL_EXPORT void UPDILIB_set_glb_logger_onlog(UPDI_onlog, void *);
 DLL_EXPORT void UPDILIB_set_glb_logger_level(int32_t);
@@ -71,6 +77,7 @@ DLL_EXPORT UPDI_Params * UPDILIB_cfg_init();
 DLL_EXPORT void UPDILIB_cfg_done(UPDI_Params *);
 
 DLL_EXPORT UPDI_bool UPDILIB_cfg_set_logger(UPDI_Params *, UPDI_logger *);
+DLL_EXPORT UPDI_bool UPDILIB_cfg_set_progress(UPDI_Params *, UPDI_progress *);
 DLL_EXPORT UPDI_bool UPDILIB_cfg_set_buadrate(UPDI_Params *, uint32_t);
 DLL_EXPORT UPDI_bool UPDILIB_cfg_set_com(UPDI_Params *, const char *);
 DLL_EXPORT UPDI_bool UPDILIB_cfg_set_device(UPDI_Params *, const char *);
@@ -87,6 +94,7 @@ DLL_EXPORT uint8_t   UPDILIB_devices_get_fuses_cnt(int8_t);
 
 DLL_EXPORT UPDI_bool UPDILIB_launch_seq(UPDI_Params *, UPDI_seq *, uint8_t);
 
+DLL_EXPORT UPDI_bool UPDILIB_read_dev_info(UPDI_Params *, uint8_t *);
 DLL_EXPORT UPDI_bool UPDILIB_erase(UPDI_Params *);
 DLL_EXPORT UPDI_bool UPDILIB_lock(UPDI_Params *);
 DLL_EXPORT UPDI_bool UPDILIB_unlock(UPDI_Params *);

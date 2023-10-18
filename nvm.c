@@ -9,6 +9,7 @@
 #include "progress.h"
 #include "sleep.h"
 #include "updi.h"
+#include "msgs.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -22,7 +23,28 @@ extern "C"
  */
 bool NVM_GetDeviceInfo(UPDI_APP * app)
 {
-  LOG_Print(app->logger, LOG_LEVEL_INFO, "Reading device info");
+  if (!app) return false;
+
+  uint16_t address;
+
+  // Must be in prog mode
+  if (app->NVM_Progmode == false)
+  {
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_ENTER_PROG_MODE_FIRST);
+    return false;
+  }
+
+  LOG_Print(app->logger, LOG_LEVEL_INFO, MSG_READING_DEVICE_INFO);
+
+  address = DEVICES_GetFusesAddress(app->DEVICE_Id);
+
+  int offset = 0;
+  while (offset < 6) {
+    ((uint16_t *)&app->DEVICE_sigrow[0])[offset] = LINK_ld16(app, address + offset * 2);
+    offset++;
+  }
+  app->DEVICE_sigrow[12] = LINK_ld(app, address + 12);
+
   return true;//self.application.device_info()
 }
 
@@ -58,7 +80,7 @@ bool NVM_UnlockDevice(UPDI_APP * app)
 {
   if (app->NVM_Progmode == true)
   {
-    LOG_Print(app->logger, LOG_LEVEL_WARNING, "Device already unlocked");
+    LOG_Print(app->logger, LOG_LEVEL_WARNING, MSG_DEVICE_ALREADY_UNLOCKED);
   } else
   {
     // Unlock after using the NVM key results in prog mode.
@@ -82,12 +104,17 @@ bool NVM_ChipErase(UPDI_APP * app)
 {
   if (app->NVM_Progmode == false)
   {
-    LOG_Print(app->logger,LOG_LEVEL_ERROR, "Enter progmode first!");
+    LOG_Print(app->logger,LOG_LEVEL_ERROR, MSG_ENTER_PROG_MODE_FIRST);
     return false;
   }
 
   return APP_ChipErase(app);
 }
+
+#ifdef UPDI_CLI_mode
+const static UPDI_cli_ud read_p_intf  = { MSG_READING, '#' };
+const static UPDI_cli_ud write_p_intf = { MSG_WRITING, '#' };
+#endif
 
 /** \brief Read data from flash memory
  *
@@ -107,7 +134,7 @@ bool NVM_ReadFlash(UPDI_APP * app, uint16_t address, uint8_t *data, uint16_t siz
   // Must be in prog mode here
   if (app->NVM_Progmode == false)
   {
-    LOG_Print(app->logger,LOG_LEVEL_ERROR, "Enter progmode first!");
+    LOG_Print(app->logger,LOG_LEVEL_ERROR, MSG_ENTER_PROG_MODE_FIRST);
     return false;
   }
 
@@ -118,14 +145,18 @@ bool NVM_ReadFlash(UPDI_APP * app, uint16_t address, uint8_t *data, uint16_t siz
   if (size % page_size != 0)
     pages++;
 
-  PROGRESS_Print(0, pages, "Reading: ", '#');
+  #ifdef UPDI_CLI_mode
+  PROGRESS_SetUserData(app->progress, (void*)&read_p_intf);
+  #endif
+
+  PROGRESS_Start(app->progress, pages);
   i = 0;
 
   err_counter = 0;
   // Read out page-wise for convenience
   while (i < pages)
   {
-    LOG_Print(app->logger,LOG_LEVEL_VERBOSE, "Reading page at 0x%04X", address);
+    LOG_Print(app->logger,LOG_LEVEL_VERBOSE, MSG_READING_PAGE, address);
     if (APP_ReadDataWords(app, address, &data[i * page_size], DEVICES_GetPageSize(app->DEVICE_Id) >> 1) == false)
     {
       // error occurred, try once more
@@ -133,7 +164,7 @@ bool NVM_ReadFlash(UPDI_APP * app, uint16_t address, uint8_t *data, uint16_t siz
       //msleep(err_counter << 8);
       if (err_counter > NVM_MAX_ERRORS)
       {
-        PROGRESS_Break();
+        PROGRESS_Break(app->progress);
         return false;
       }
       continue;
@@ -143,9 +174,10 @@ bool NVM_ReadFlash(UPDI_APP * app, uint16_t address, uint8_t *data, uint16_t siz
     }
     i++;
     // show progress bar
-    PROGRESS_Print(i, pages, "Reading: ", '#');
+    PROGRESS_Step(app->progress, i);
     address += page_size;
   }
+  PROGRESS_Break(app->progress);
 
   return true;
 }
@@ -168,7 +200,7 @@ bool NVM_WriteFlash(UPDI_APP * app, uint16_t address, uint8_t *data, uint16_t si
   // Must be in prog mode
   if (app->NVM_Progmode == false)
   {
-    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Enter progmode first!");
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_ENTER_PROG_MODE_FIRST);
     return false;
   }
 
@@ -179,20 +211,24 @@ bool NVM_WriteFlash(UPDI_APP * app, uint16_t address, uint8_t *data, uint16_t si
   if (size % page_size != 0)
     pages++;
 
-  PROGRESS_Print(0, pages, "Writing: ", '#');
+  #ifdef UPDI_CLI_mode
+  PROGRESS_SetUserData(app->progress, (void*)&write_p_intf);
+  #endif
+
+  PROGRESS_Start(app->progress, pages);
   i = 0;
 
   err_counter = 0;
   // Program each page
   while (i < pages)
   {
-    LOG_Print(app->logger, LOG_LEVEL_VERBOSE, "Writing page at 0x%04X", address);
+    LOG_Print(app->logger, LOG_LEVEL_VERBOSE, MSG_WRITING_PAGE, address);
     if (APP_WriteNvm(app, address, &data[i * page_size], page_size, true) == false)
     {
       err_counter++;
       if (err_counter > NVM_MAX_ERRORS)
       {
-        PROGRESS_Break();
+        PROGRESS_Break(app->progress);
         return false;
       }
       continue;
@@ -202,9 +238,10 @@ bool NVM_WriteFlash(UPDI_APP * app, uint16_t address, uint8_t *data, uint16_t si
     }
     i++;
     // show progress bar
-    PROGRESS_Print(i, pages, "Writing: ", '#');
+    PROGRESS_Step(app->progress, i);
     address += page_size;
   }
+  PROGRESS_Break(app->progress);
 
   return true;
 }
@@ -222,7 +259,7 @@ uint8_t NVM_ReadFuse(UPDI_APP * app, uint8_t fusenum)
   // Must be in prog mode
   if (app->NVM_Progmode == false)
   {
-    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Enter progmode first!");
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_ENTER_PROG_MODE_FIRST);
     return false;
   }
 
@@ -247,13 +284,13 @@ bool NVM_WriteFuse(UPDI_APP * app, uint8_t fusenum, uint8_t value)
   // Must be in prog mode
   if (app->NVM_Progmode == false)
   {
-    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Enter progmode first!");
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_ENTER_PROG_MODE_FIRST);
     return false;
   }
 
   if (!APP_WaitFlashReady(app))
   {
-    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Flash not ready for fuse setting");
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_FLASH_NOT_READY_FUSE);
     return false;
   }
 
@@ -286,7 +323,7 @@ bool NVM_LoadIhexStream(UPDI_APP * app, IHEX_Stream * stream, uint16_t address, 
   fdata = malloc(len);
   if (!fdata)
   {
-    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Unable to allocate %d bytes", (int)len);
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_UNABLE_ALLOC_MEM, (int)len);
     return false;
   }
   max_addr = 0;
@@ -298,7 +335,7 @@ bool NVM_LoadIhexStream(UPDI_APP * app, IHEX_Stream * stream, uint16_t address, 
     case IHEX_ERROR_SIZE:
     case IHEX_ERROR_FMT:
     case IHEX_ERROR_CRC:
-      LOG_Print(app->logger, LOG_LEVEL_ERROR, "Problem reading Hex file");
+      LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_PROBLEM_READING_HEX);
       res = false;
       break;
     case IHEX_ERROR_NONE:
@@ -388,7 +425,7 @@ bool NVM_LoadIhexFile(UPDI_APP * app, char *filename, uint16_t address, uint16_t
 
   if ((fp = fopen(filename, "rt")) == NULL)
   {
-    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Unable to open file: %s", filename);
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_UNABLE_OPEN_FILE, filename);
     return false;
   }
 
@@ -412,20 +449,20 @@ bool NVM_SaveIhexStream(UPDI_APP * app, IHEX_Stream * stream, uint16_t address, 
   fdata = malloc(len);
   if (!fdata)
   {
-    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Unable to allocate %d bytes", (int)len);
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_UNABLE_ALLOC_MEM, (int)len);
     return false;
   }
   memset(fdata, 0xff, len);
 
   if (NVM_ReadFlash(app, address, fdata, len) == false)
   {
-    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Reading from device failed");
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_READING_DEVICE_FAIL);
   } else
   {
     if (IHEX_WriteStream(stream, fdata, len) == IHEX_ERROR_NONE)
       res = true;
     else
-      LOG_Print(app->logger, LOG_LEVEL_ERROR, "Problem writing Hex file");
+      LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_PROBLEM_WRITING_HEX);
   }
 
   free(fdata);
@@ -476,7 +513,7 @@ bool NVM_SaveIhexFile(UPDI_APP * app, char *filename, uint16_t address, uint16_t
 
   if ((fp = fopen(filename, "w")) == NULL)
   {
-    LOG_Print(app->logger, LOG_LEVEL_ERROR, "Unable to open file: %s", filename);
+    LOG_Print(app->logger, LOG_LEVEL_ERROR, MSG_UNABLE_OPEN_FILE, filename);
   } else
   {
     IHEX_Stream file_stream;

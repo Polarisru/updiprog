@@ -35,6 +35,7 @@ const
   COMPORT_LEN            = 32;
   DEVICES_NAME_LEN       = 16;
   LOG_SRCNAME_LEN        = 8;
+  DEV_INFO_LEN           = 16;
 
   LOG_LEVEL_VERBOSE      = 0;
   LOG_LEVEL_INFO         = 1;
@@ -50,12 +51,18 @@ const
   UPDI_SEQ_SET_FUSES     = 6;
   UPDI_SEQ_GET_FUSES     = 7;
   UPDI_SEQ_LOCK          = 8;
+  UPDI_SEQ_GET_SIG_ROW   = 9;
 
 type
   UPDI_bool = Byte;
 
   UPDI_onlog = procedure (ud: Pointer; level: int32; const src, msg: pansichar) cdecl;
   UPDI_onlogfree = procedure (ud: Pointer) cdecl;
+  UPDI_onprgs = procedure (ud: pointer; pos, total:  uint16) cdecl;
+  UPDI_onprgsstart = procedure (ud: pointer; total:  uint16) cdecl;
+  UPDI_onprgsfinish = procedure (ud: pointer; pos, total: uint16) cdecl;
+
+  pUPDI_progress = Pointer;
 
   pUPDI_logger = Pointer;
 
@@ -84,6 +91,12 @@ function UPDILIB_logger_init(const src : pansichar;
                              ud : Pointer) : pUPDI_logger;
 procedure UPDILIB_logger_done(logger : pUPDI_logger);
 
+function UPDILIB_progress_init(onstart : UPDI_onprgsstart;
+                               onstep :  UPDI_onprgs;
+                               onfinish : UPDI_onprgsfinish;
+                               ud : pointer) : pUPDI_progress;
+procedure UPDILIB_progress_done(po : pUPDI_progress);
+
 procedure UPDILIB_set_glb_logger_onlog(onlog: UPDI_onlog; ud : Pointer);
 procedure UPDILIB_set_glb_logger_level(level : int32);
 
@@ -92,6 +105,8 @@ procedure UPDILIB_cfg_done(cfg: pUPDI_Params);
 
 function UPDILIB_cfg_set_logger(cfg : pUPDI_Params;
                              logger : pUPDI_logger) : UPDI_bool;
+function UPDILIB_cfg_set_progress(cfg : pUPDI_Params;
+                             po: pUPDI_progress) : UPDI_bool;
 function UPDILIB_cfg_set_buadrate(cfg : pUPDI_Params;
                              value : uint32) : UPDI_bool;
 function UPDILIB_cfg_set_com(cfg : pUPDI_Params;
@@ -109,6 +124,8 @@ function UPDILIB_devices_get_fuses_cnt(id : int8) : Byte;
 
 function UPDILIB_launch_seq(cfg : pUPDI_Params; seq : pUPDI_seq;
                              len : Byte) : UPDI_bool;
+
+function UPDILIB_read_dev_info(cfg : pUPDI_Params; data : pByte) : UPDI_bool;
 
 function UPDILIB_erase(cfg : pUPDI_Params) : UPDI_bool;
 
@@ -142,6 +159,13 @@ type
                              onfree: UPDI_onlogfree;
                              ud : Pointer) : pUPDI_logger cdecl;
    p_UPDILIB_logger_done = procedure (logger : pUPDI_logger) cdecl;
+
+   p_UPDILIB_progress_init = function (onstart : UPDI_onprgsstart;
+                               onstep :  UPDI_onprgs;
+                               onfinish : UPDI_onprgsfinish;
+                               ud : pointer) : pUPDI_progress cdecl;
+   p_UPDILIB_progress_done = procedure (op : pUPDI_progress) cdecl;
+
    p_UPDILIB_set_glb_logger_onlog = procedure(onlog: UPDI_onlog;
                              ud : Pointer) cdecl;
    p_UPDILIB_set_glb_logger_level = procedure (level : int32) cdecl;
@@ -151,6 +175,8 @@ type
 
    p_UPDILIB_cfg_set_logger = function (cfg : pUPDI_Params;
                              logger : pUPDI_logger) : UPDI_bool cdecl;
+   p_UPDILIB_cfg_set_progress = function (cfg : pUPDI_Params;
+                             po : pUPDI_progress) : UPDI_bool cdecl;
    p_UPDILIB_cfg_set_buadrate = function (cfg : pUPDI_Params;
                              value : uint32) : UPDI_bool cdecl;
    p_UPDILIB_cfg_set_com = function (cfg : pUPDI_Params;
@@ -170,6 +196,8 @@ type
    p_UPDILIB_launch_seq = function (cfg : pUPDI_Params; seq : pUPDI_seq;
                              len : Byte) : UPDI_bool cdecl;
 
+   p_UPDILIB_read_dev_info = function (cfg : pUPDI_Params;
+                             data : pByte) : UPDI_bool cdecl;
    p_UPDILIB_erase = function (cfg : pUPDI_Params) : UPDI_bool cdecl;
 
    p_UPDILIB_write_fuses = function (cfg : pUPDI_Params;
@@ -187,11 +215,14 @@ type
 var
   _UPDILIB_logger_init       : p_UPDILIB_logger_init       = nil;
   _UPDILIB_logger_done       : p_UPDILIB_logger_done       = nil;
+  _UPDILIB_progress_init     : p_UPDILIB_progress_init     = nil;
+  _UPDILIB_progress_done     : p_UPDILIB_progress_done     = nil;
   _UPDILIB_set_glb_logger_onlog : p_UPDILIB_set_glb_logger_onlog = nil;
   _UPDILIB_set_glb_logger_level : p_UPDILIB_set_glb_logger_level = nil;
   _UPDILIB_cfg_init          : p_UPDILIB_cfg_init          = nil;
   _UPDILIB_cfg_done          : p_UPDILIB_cfg_done          = nil;
   _UPDILIB_cfg_set_logger    : p_UPDILIB_cfg_set_logger    = nil;
+  _UPDILIB_cfg_set_progress  : p_UPDILIB_cfg_set_progress  = nil;
   _UPDILIB_cfg_set_buadrate  : p_UPDILIB_cfg_set_buadrate  = nil;
   _UPDILIB_cfg_set_com       : p_UPDILIB_cfg_set_com       = nil;
   _UPDILIB_cfg_set_device    : p_UPDILIB_cfg_set_device    = nil;
@@ -203,6 +234,7 @@ var
   _UPDILIB_devices_get_fuses_cnt : p_UPDILIB_devices_get_fuses_cnt = nil;
   _UPDILIB_launch_seq        : p_UPDILIB_launch_seq        = nil;
   _UPDILIB_erase             : p_UPDILIB_erase             = nil;
+  _UPDILIB_read_dev_info     : p_UPDILIB_read_dev_info     = nil;
   _UPDILIB_write_fuses       : p_UPDILIB_write_fuses       = nil;
   _UPDILIB_read_fuses        : p_UPDILIB_read_fuses        = nil;
   _UPDILIB_write_hex         : p_UPDILIB_write_hex         = nil;
@@ -221,6 +253,21 @@ procedure UPDILIB_logger_done(logger: pUPDI_logger);
 begin
   if Assigned(_UPDILIB_logger_done) then
     _UPDILIB_logger_done(logger);
+end;
+
+function UPDILIB_progress_init(onstart: UPDI_onprgsstart; onstep: UPDI_onprgs;
+  onfinish: UPDI_onprgsfinish; ud: pointer): pUPDI_progress;
+begin
+  if Assigned(_UPDILIB_progress_init) then
+    Result := _UPDILIB_progress_init(onstart, onstep, onfinish, ud)
+  else
+    Result := nil;
+end;
+
+procedure UPDILIB_progress_done(po: pUPDI_progress);
+begin
+  if Assigned(_UPDILIB_progress_done) then
+    _UPDILIB_progress_done(po);
 end;
 
 procedure UPDILIB_set_glb_logger_onlog(onlog: UPDI_onlog; ud: Pointer);
@@ -254,6 +301,15 @@ function UPDILIB_cfg_set_logger(cfg: pUPDI_Params; logger: pUPDI_logger
 begin
   if Assigned(_UPDILIB_cfg_set_logger) then
     Result := _UPDILIB_cfg_set_logger(cfg, logger)
+  else
+    Result := 0;
+end;
+
+function UPDILIB_cfg_set_progress(cfg: pUPDI_Params; po: pUPDI_progress
+  ): UPDI_bool;
+begin
+  if Assigned(_UPDILIB_cfg_set_progress) then
+    Result := _UPDILIB_cfg_set_progress(cfg, po)
   else
     Result := 0;
 end;
@@ -338,6 +394,14 @@ function UPDILIB_launch_seq(cfg : pUPDI_Params; seq : pUPDI_seq; len : Byte
 begin
   if Assigned(_UPDILIB_launch_seq) then
     Result := _UPDILIB_launch_seq(cfg, seq, len)
+  else
+    Result := 0;
+end;
+
+function UPDILIB_read_dev_info(cfg: pUPDI_Params; data: pByte): UPDI_bool;
+begin
+  if Assigned(_UPDILIB_read_dev_info) then
+    Result := _UPDILIB_read_dev_info(cfg, data)
   else
     Result := 0;
 end;
@@ -429,6 +493,7 @@ begin
   _UPDILIB_cfg_init := p_UPDILIB_cfg_init(GetProcAddr(LUPDILib, 'UPDILIB_cfg_init'));
   _UPDILIB_cfg_done := p_UPDILIB_cfg_done(GetProcAddr(LUPDILib, 'UPDILIB_cfg_done'));
   _UPDILIB_cfg_set_logger := p_UPDILIB_cfg_set_logger(GetProcAddr(LUPDILib, 'UPDILIB_cfg_set_logger'));
+  _UPDILIB_cfg_set_progress := p_UPDILIB_cfg_set_progress(GetProcAddr(LUPDILib, 'UPDILIB_cfg_set_progress'));
   _UPDILIB_cfg_set_buadrate := p_UPDILIB_cfg_set_buadrate(GetProcAddr(LUPDILib, 'UPDILIB_cfg_set_buadrate'));
   _UPDILIB_cfg_set_com := p_UPDILIB_cfg_set_com(GetProcAddr(LUPDILib, 'UPDILIB_cfg_set_com'));
   _UPDILIB_cfg_set_device := p_UPDILIB_cfg_set_device(GetProcAddr(LUPDILib, 'UPDILIB_cfg_set_device'));
@@ -437,6 +502,7 @@ begin
   _UPDILIB_devices_get_fuses_cnt := p_UPDILIB_devices_get_fuses_cnt(GetProcAddr(LUPDILib, 'UPDILIB_devices_get_fuses_cnt'));
   _UPDILIB_launch_seq        := p_UPDILIB_launch_seq(GetProcAddr(LUPDILib, 'UPDILIB_launch_seq'));
   _UPDILIB_erase := p_UPDILIB_erase(GetProcAddr(LUPDILib, 'UPDILIB_erase'));
+  _UPDILIB_read_dev_info := p_UPDILIB_read_dev_info(GetProcAddr(LUPDILib, 'UPDILIB_read_dev_info'));
   _UPDILIB_write_fuses := p_UPDILIB_write_fuses(GetProcAddr(LUPDILib, 'UPDILIB_write_fuses'));
   _UPDILIB_read_fuses := p_UPDILIB_read_fuses(GetProcAddr(LUPDILib, 'UPDILIB_read_fuses'));
   _UPDILIB_write_hex := p_UPDILIB_write_hex(GetProcAddr(LUPDILib, 'UPDILIB_write_hex'));
@@ -452,6 +518,7 @@ begin
   _UPDILIB_cfg_init := nil;
   _UPDILIB_cfg_done := nil;
   _UPDILIB_cfg_set_logger := nil;
+  _UPDILIB_cfg_set_progress := nil;
   _UPDILIB_cfg_set_buadrate := nil;
   _UPDILIB_cfg_set_com := nil;
   _UPDILIB_cfg_set_device := nil;
@@ -460,6 +527,7 @@ begin
   _UPDILIB_devices_get_fuses_cnt := nil;
   _UPDILIB_launch_seq := nil;
   _UPDILIB_erase := nil;
+  _UPDILIB_read_dev_info := nil;
   _UPDILIB_write_fuses := nil;
   _UPDILIB_read_fuses := nil;
   _UPDILIB_write_hex := nil;

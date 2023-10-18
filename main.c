@@ -291,7 +291,13 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  UPDI_APP * app = APP_Init(NULL);
+  UPDI_progress po;
+  po.onstart    = &PROGRESS_CLI_start;
+  po.onprogress = &PROGRESS_CLI_step;
+  po.onfinish   = &PROGRESS_CLI_stop;
+  po.ud = NULL;
+
+  UPDI_APP * app = APP_Init(NULL, &po);
 
   if (!app) return -2;
 
