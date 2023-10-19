@@ -17,7 +17,6 @@
 				<Option createStaticLib="1" />
 				<Compiler>
 					<Add option="-g" />
-					<Add option="-D__linux" />
 				</Compiler>
 				<ExtraCommands>
 					<Add after="cp -rf $(PROJECTDIR)$(TARGET_OUTPUT_DIR)lib$(PROJECT_NAME).so  $(PROJECTDIR)" />
@@ -32,7 +31,6 @@
 				<Option createStaticLib="1" />
 				<Compiler>
 					<Add option="-O2" />
-					<Add option="-D__linux" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />

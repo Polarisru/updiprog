@@ -1,0 +1,27 @@
+EXPORTS
+    UPDILIB_cfg_done @1
+    UPDILIB_cfg_get_baudrate @2
+    UPDILIB_cfg_get_com @3
+    UPDILIB_cfg_get_device @4
+    UPDILIB_cfg_init @5
+    UPDILIB_cfg_set_buadrate @6
+    UPDILIB_cfg_set_com @7
+    UPDILIB_cfg_set_device @8
+    UPDILIB_cfg_set_logger @9
+    UPDILIB_cfg_set_progress @10
+    UPDILIB_devices_get_count @11
+    UPDILIB_devices_get_fuses_cnt @12
+    UPDILIB_devices_get_name @13
+    UPDILIB_erase @14
+    UPDILIB_launch_seq @15
+    UPDILIB_logger_done @16
+    UPDILIB_logger_init @17
+    UPDILIB_progress_done @18
+    UPDILIB_progress_init @19
+    UPDILIB_read_dev_info @20
+    UPDILIB_read_fuses @21
+    UPDILIB_read_hex @22
+    UPDILIB_set_glb_logger_level @23
+    UPDILIB_set_glb_logger_onlog @24
+    UPDILIB_write_fuses @25
+    UPDILIB_write_hex @26

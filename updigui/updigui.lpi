@@ -120,6 +120,9 @@
           <Linking>
             <Debugging>
               <GenerateDebugInfo Value="False"/>
+              <UseLineInfoUnit Value="False"/>
+              <StripSymbols Value="True"/>
+              <UseExternalDbgSyms Value="True"/>
             </Debugging>
             <LinkSmart Value="True"/>
             <Options>

@@ -52,11 +52,11 @@ type
 
   TForm1 = class(TForm)
     BaudComboBox: TComboBox;
-    DevicesComboBox: TComboBox;
-    DevIdText: TEdit;
-    DeviceSNText: TEdit;
-    EraseDeviceButton: TSpeedButton;
     DeviceInfoButton: TSpeedButton;
+    DevicesComboBox: TComboBox;
+    DeviceSNText: TEdit;
+    DevIdText: TEdit;
+    EraseDeviceButton: TSpeedButton;
     EraseDeviceCheckBox: TCheckBox;
     FlashButton: TButton;
     FusesBox: TGroupBox;
@@ -73,6 +73,8 @@ type
     MemoryBox: TGroupBox;
     Panel1: TPanel;
     Panel2: TPanel;
+    Panel3: TPanel;
+    Panel4: TPanel;
     PortComboBox: TComboBox;
     ProgressBar1: TProgressBar;
     ReadButton: TButton;
@@ -486,7 +488,7 @@ var
   c1 : PByte;
   c2 : PByte;
 
-  sz1, sz2, s, i : Integer;
+  sz1, sz2, s : Integer;
   buf1, buf2 : PByte;
 begin
   c1 := PByte(d1);

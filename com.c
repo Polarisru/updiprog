@@ -238,12 +238,12 @@ uint16_t COM_GetTransTime(UPDI_COM_port* port, uint16_t len)
 }
 
 #ifdef __MINGW32__
-void COM_WaitForTransmit(void)
+void COM_WaitForTransmit(UPDI_COM_port* port)
 {
   COMSTAT rStat;
   DWORD nErr;
   do {
-    ClearCommError(hSerial, &nErr, &rStat);
+    ClearCommError(port->hSerial, &nErr, &rStat);
   } while (rStat.cbOutQue > 0);
 }
 #endif // __MINGW32__
@@ -260,7 +260,7 @@ void COM_Close(UPDI_COM_port** port)
 
   LOG_Print_GLOBAL(LOG_LEVEL_INFO, MSG_CLOSE_COM, (*port)->port);
   #ifdef __MINGW32__
-  CloseHandle(port->hSerial);
+  CloseHandle((*port)->hSerial);
   #endif
   #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__linux)
   close((*port)->fd);

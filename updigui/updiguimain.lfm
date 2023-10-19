@@ -9,7 +9,7 @@ object Form1: TForm1
   ClientWidth = 516
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  LCLVersion = '2.2.6.0'
+  LCLVersion = '2.2.2.0'
   object Panel1: TPanel
     Left = 0
     Height = 352
@@ -20,67 +20,21 @@ object Form1: TForm1
     ClientHeight = 352
     ClientWidth = 516
     TabOrder = 0
-    object DevicesComboBox: TComboBox
-      Left = 12
-      Height = 35
-      Top = 88
-      Width = 157
-      ItemHeight = 0
-      OnChange = DevicesComboBoxChange
-      OnSelect = DevicesComboBoxSelect
-      Style = csDropDownList
-      TabOrder = 0
-    end
     object Label1: TLabel
       Left = 12
-      Height = 19
+      Height = 15
       Top = 64
-      Width = 75
+      Width = 68
       Caption = 'Device name'
       ParentColor = False
     end
     object Label2: TLabel
       Left = 12
-      Height = 19
-      Top = 0
-      Width = 26
+      Height = 15
+      Top = 8
+      Width = 22
       Caption = 'Port'
       ParentColor = False
-    end
-    object PortComboBox: TComboBox
-      Left = 12
-      Height = 35
-      Top = 24
-      Width = 316
-      ItemHeight = 0
-      OnChange = PortComboBoxChange
-      OnSelect = PortComboBoxSelect
-      Style = csDropDownList
-      TabOrder = 1
-    end
-    object RefreshTTYButton: TSpeedButton
-      Left = 328
-      Height = 32
-      Hint = 'Refresh List Of Devices'
-      Top = 25
-      Width = 32
-      Images = ImageList1
-      ImageIndex = 0
-      OnClick = RefreshTTYButtonClick
-      ShowHint = True
-      ParentShowHint = False
-    end
-    object EraseDeviceButton: TSpeedButton
-      Left = 169
-      Height = 32
-      Hint = 'Erase Device'
-      Top = 88
-      Width = 32
-      Images = ImageList1
-      ImageIndex = 1
-      OnClick = EraseDeviceButtonClick
-      ShowHint = True
-      ParentShowHint = False
     end
     object FusesBox: TGroupBox
       Left = 16
@@ -89,13 +43,13 @@ object Form1: TForm1
       Width = 153
       Caption = 'Fuses'
       ClientHeight = 204
-      ClientWidth = 151
-      TabOrder = 2
+      ClientWidth = 149
+      TabOrder = 0
       object FusesGrid: TStringGrid
         Left = 4
         Height = 161
         Top = 4
-        Width = 143
+        Width = 141
         Align = alTop
         BorderSpacing.Around = 4
         ColCount = 3
@@ -133,11 +87,11 @@ object Form1: TForm1
       Width = 325
       Caption = 'Memory'
       ClientHeight = 204
-      ClientWidth = 323
-      TabOrder = 3
+      ClientWidth = 321
+      TabOrder = 1
       object InputHEXFile: TFileNameEdit
         Left = 8
-        Height = 36
+        Height = 23
         Top = 24
         Width = 304
         Filter = 'Hex file|*.hex'
@@ -151,17 +105,17 @@ object Form1: TForm1
       end
       object EraseDeviceCheckBox: TCheckBox
         Left = 8
-        Height = 23
+        Height = 19
         Top = 120
-        Width = 228
+        Width = 199
         Caption = 'Erase Device Before Programming'
         TabOrder = 1
       end
       object VerifyDeviceCheckBox: TCheckBox
         Left = 8
-        Height = 23
+        Height = 19
         Top = 144
-        Width = 218
+        Width = 194
         Caption = 'Verify Device After Programming'
         OnChange = VerifyDeviceCheckBoxChange
         TabOrder = 2
@@ -195,84 +149,164 @@ object Form1: TForm1
       end
       object Label3: TLabel
         Left = 8
-        Height = 19
+        Height = 15
         Top = 4
-        Width = 129
+        Width = 114
         Caption = 'File to read/save flash'
         ParentColor = False
       end
     end
-    object BaudComboBox: TComboBox
-      Left = 368
-      Height = 31
-      Top = 25
-      Width = 133
-      ItemHeight = 0
-      ItemIndex = 4
-      Items.Strings = (
-        '300'
-        '9600'
-        '38400'
-        '57600'
-        '115200'
-        '230400'
-      )
-      OnSelect = BaudComboBoxSelect
-      Style = csDropDownList
-      TabOrder = 4
-      Text = '115200'
-    end
     object Label4: TLabel
       Left = 368
-      Height = 19
-      Top = 0
-      Width = 55
+      Height = 15
+      Top = 8
+      Width = 47
       Caption = 'Baudrate'
       ParentColor = False
     end
     object Label5: TLabel
       Left = 248
-      Height = 19
+      Height = 15
       Top = 64
-      Width = 52
+      Width = 48
       Caption = 'Device id'
       ParentColor = False
     end
-    object DevIdText: TEdit
-      Left = 248
-      Height = 36
-      Top = 87
-      Width = 80
-      ReadOnly = True
-      TabOrder = 5
-    end
-    object DeviceSNText: TEdit
-      Left = 336
-      Height = 36
-      Top = 88
-      Width = 165
-      ReadOnly = True
-      TabOrder = 6
-    end
     object Label6: TLabel
       Left = 336
-      Height = 19
+      Height = 15
       Top = 64
-      Width = 63
+      Width = 58
       Caption = 'Device S/N'
       ParentColor = False
     end
-    object DeviceInfoButton: TSpeedButton
-      Left = 202
+    object Panel3: TPanel
+      Left = 12
       Height = 32
-      Hint = 'Erase Device'
-      Top = 88
-      Width = 32
-      Images = ImageList1
-      ImageIndex = 2
-      OnClick = DeviceInfoButtonClick
-      ShowHint = True
-      ParentShowHint = False
+      Top = 24
+      Width = 492
+      BevelOuter = bvNone
+      ClientHeight = 32
+      ClientWidth = 492
+      TabOrder = 2
+      object PortComboBox: TComboBox
+        Left = 2
+        Height = 23
+        Top = 2
+        Width = 319
+        Align = alClient
+        BorderSpacing.Around = 2
+        ItemHeight = 15
+        OnChange = PortComboBoxChange
+        OnSelect = PortComboBoxSelect
+        Style = csDropDownList
+        TabOrder = 0
+      end
+      object RefreshTTYButton: TSpeedButton
+        Left = 323
+        Height = 32
+        Hint = 'Refresh List Of Devices'
+        Top = 0
+        Width = 32
+        Align = alRight
+        Images = ImageList1
+        ImageIndex = 0
+        OnClick = RefreshTTYButtonClick
+        ShowHint = True
+        ParentShowHint = False
+      end
+      object BaudComboBox: TComboBox
+        Left = 357
+        Height = 23
+        Top = 2
+        Width = 133
+        Align = alRight
+        BorderSpacing.Around = 2
+        ItemHeight = 15
+        ItemIndex = 4
+        Items.Strings = (
+          '300'
+          '9600'
+          '38400'
+          '57600'
+          '115200'
+          '230400'
+        )
+        OnSelect = BaudComboBoxSelect
+        Style = csDropDownList
+        TabOrder = 1
+        Text = '115200'
+      end
+    end
+    object Panel4: TPanel
+      Left = 12
+      Height = 32
+      Top = 80
+      Width = 492
+      BorderSpacing.Around = 2
+      BevelOuter = bvNone
+      ClientHeight = 32
+      ClientWidth = 492
+      TabOrder = 3
+      object DevicesComboBox: TComboBox
+        Left = 2
+        Height = 23
+        Top = 2
+        Width = 173
+        Align = alClient
+        BorderSpacing.Around = 2
+        ItemHeight = 15
+        OnChange = DevicesComboBoxChange
+        OnSelect = DevicesComboBoxSelect
+        Style = csDropDownList
+        TabOrder = 0
+      end
+      object EraseDeviceButton: TSpeedButton
+        Left = 177
+        Height = 32
+        Hint = 'Erase Device'
+        Top = 0
+        Width = 32
+        Align = alRight
+        Images = ImageList1
+        ImageIndex = 1
+        OnClick = EraseDeviceButtonClick
+        ShowHint = True
+        ParentShowHint = False
+      end
+      object DeviceInfoButton: TSpeedButton
+        Left = 209
+        Height = 32
+        Hint = 'Get Device Info'
+        Top = 0
+        Width = 32
+        Align = alRight
+        Images = ImageList1
+        ImageIndex = 2
+        OnClick = DeviceInfoButtonClick
+        ShowHint = True
+        ParentShowHint = False
+      end
+      object DevIdText: TEdit
+        Left = 243
+        Height = 28
+        Top = 2
+        Width = 80
+        Align = alRight
+        BorderSpacing.Around = 2
+        ReadOnly = True
+        TabOrder = 1
+      end
+      object DeviceSNText: TEdit
+        Left = 325
+        Height = 28
+        Top = 2
+        Width = 165
+        Align = alRight
+        BorderSpacing.Around = 2
+        ReadOnly = True
+        TabOrder = 2
+      end
     end
   end
   object Panel2: TPanel
