@@ -76,13 +76,17 @@ UPDI_COM_port* COM_Open(char *port, uint32_t baudrate, bool have_parity, bool tw
   #endif
 
   #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__linux)
-  res->fd = open(port, O_RDWR | O_NOCTTY | O_SYNC );
+  res->fd = open(port, O_RDWR | O_NOCTTY | O_NDELAY | O_SYNC );
   if (res->fd <0) {
     free(res);
     return false;
   }
+  int f = fcntl(res->fd, F_GETFL, 0);
+  f &= ~O_NONBLOCK;
+  fcntl(res->fd, F_SETFL, f);
   struct termios SerialPortSettings;
-  tcgetattr(res->fd, &SerialPortSettings);	/* Get the current attributes of the Serial port */
+  memset(&SerialPortSettings, 0, sizeof(SerialPortSettings));
+  //tcgetattr(res->fd, &SerialPortSettings);	/* Get the current attributes of the Serial port */
   /* Setting the Baud rate */
   switch (baudrate)
   {
@@ -121,12 +125,14 @@ UPDI_COM_port* COM_Open(char *port, uint32_t baudrate, bool have_parity, bool tw
     SerialPortSettings.c_cflag |= CSTOPB;   /* CSTOPB = 2 Stop bits */
   else
     SerialPortSettings.c_cflag &= ~CSTOPB;  /* CSTOPB = 2 Stop bits,here it is cleared so 1 Stop bit */
-  SerialPortSettings.c_cflag |= (CREAD | CLOCAL); /* Enable receiver,Ignore Modem Control lines       */
-  SerialPortSettings.c_cflag &= ~ICANON;
+  SerialPortSettings.c_cflag |= (CREAD | CLOCAL | CS8); // Enable receiver,Ignore Modem Control lines
   SerialPortSettings.c_cc[VMIN]  = 0;            // read doesn't block
   SerialPortSettings.c_cc[VTIME] = 5;            // 0.5 seconds read timeout
-  tcsetattr(res->fd, TCSANOW, &SerialPortSettings);  /* Set the attributes to the termios structure*/
   tcflush(res->fd, TCIFLUSH);
+  tcsetattr(res->fd, TCSAFLUSH, &SerialPortSettings);  // Set the attributes to the termios structure
+  // Flush to put settings to work
+  tcflush(res->fd, TCIOFLUSH);
+
   #endif
 
   return res;

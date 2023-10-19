@@ -10,6 +10,8 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
+#include <linux/serial.h>
 #endif
 #include <stdint.h>
 #include <stdbool.h>

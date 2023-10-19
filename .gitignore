@@ -1,11 +1,17 @@
 */*/*/*.o
+*/*/*/*.def
+*/*/*/*.a
 */*/*/*.so
 */*/*/*.dll
 */*/*/*/*.o
 */*/*/*/*.so
 */*/*/*/*.dll
+*/*/*/*/*.def
+*/*/*/*/*.a
 */*.hex
 */*.depend
+*.exe
+*/*.exe
 *.o
 *.dll
 *.so
@@ -18,4 +24,6 @@
 */*.res
 *.layout
 */*.layout
+release*/*
+release*/*/*
 updigui/updigui
