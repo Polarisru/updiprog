@@ -1,4 +1,12 @@
-# updiprog
+# UPDI program tools
+
+Utility and library with CLI (Pure-C) and GUI (Lazarus) modes for programming AVR devices with UPDI interface using a standard TTL serial port
+
+#### Screeshots
+
+![updi_gui](https://raw.githubusercontent.com/iLya2IK/updiprog/main/images/Screenshot_20231018_221738.png)
+
+## updiprog
 
 This is C version of UPDI interface utility with improvements, you could refer to the Python version: [pyupdi](https://github.com/mraardvark/pyupdi.git)
 	
@@ -32,7 +40,7 @@ I am using [CH340 USB to TTL converter](https://www.elektor.de/ch340-usb-to-ttl-
 </pre>
 **Warning!!!** If you don't have any output resistors on your CH340 board, please mount them!
 
-# Additional features were added:
+## Additional features were added:
 	- reading content of the flash memory from the MCU
 	- reading fuses
 	- different levels of logging
@@ -40,7 +48,7 @@ I am using [CH340 USB to TTL converter](https://www.elektor.de/ch340-usb-to-ttl-
 	- many additional error messages
 	- locking/unlocking MCU
 
-# A brief description of all available options.
+## A brief description of all available options.
 
 	-b BAUDRATE - set COM baudrate (default=115200)
 	-d DEVICE   - target device (tinyXXX)
@@ -72,3 +80,7 @@ I am using [CH340 USB to TTL converter](https://www.elektor.de/ch340-usb-to-ttl-
 		
 	Write 0x04 to fuse number 1 and 0x1b to fuse number 5:
 		updiprog.exe -c COM10 -d tiny81x -fw 1:0x04 5:0x1b
+
+## UPDIlib and UPDIgui
+
+UPDIlib is a dynamically linking library and API for working with the UPDInterface. As an example of using the library, UPDIgui is presented - a program written in Lazarus for changing fuses, writing, reading and verifying the memory of AVR devices.
