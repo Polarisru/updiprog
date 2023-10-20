@@ -4,7 +4,7 @@ Utility and library with CLI (Pure-C) and GUI (Lazarus) modes for programming AV
 
 #### Screeshots
 
-![updi_gui](https://raw.githubusercontent.com/iLya2IK/updiprog/main/images/Screenshot_20231018_221738.png)
+![updi_gui](https://raw.githubusercontent.com/iLya2IK/updiprog/master/updigui/screenshots/Screenshot_20231018_221738.png)
 
 ## updiprog
 
