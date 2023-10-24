@@ -1,3 +1,16 @@
+/*!
+ *  \file      updilib.cpp
+ *  \brief     Library and API for programming AVR devices over
+ *             the UPD interface using a standard TTL serial port
+ *  \details   Implementation of API routes. UPDIlib is a dynamically
+ *             linking library and API for working with the UPDInterface
+ *  \author    Ilya Medvedkov
+ *  \version   1.0
+ *  \date      2023
+ *  \remark
+ *  \copyright
+ */
+
 #include "updilib.h"
 #include "stdlib.h"
 #include "string.h"
