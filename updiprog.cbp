@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="-d tiny161x -c COM5 -r test.hex -fr -lr -ls" />
+				<Option parameters="-h" />
 				<Compiler>
 					<Add option="-std=c99" />
 					<Add option="-g" />
