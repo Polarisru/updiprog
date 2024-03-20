@@ -17,6 +17,11 @@
 #define IHEX_NEWLINE        "\n"
 #define IHEX_ENDFILE        ":00000001FF"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 enum {
   IHEX_DATA_RECORD,
   IHEX_END_OF_FILE_RECORD,
@@ -34,10 +39,25 @@ enum {
   IHEX_ERROR_CRC
 };
 
+typedef bool(*IHEX_Stream_eof)(void*);
+typedef bool(*IHEX_Stream_gets)(void*, char *, int32_t);
+typedef bool(*IHEX_Stream_write)(void* ud, const void *ptr, int32_t len);
+
+typedef struct IHEX_Stream_t {
+    void * ud;
+    IHEX_Stream_eof eof;
+    IHEX_Stream_gets gets;
+    IHEX_Stream_write write;
+} IHEX_Stream;
+
 #define IHEX_DIGIT(n) ((char)((n) + (((n) < 10) ? '0' : ('A' - 10))))
 
-uint8_t IHEX_WriteFile(FILE *fp, uint8_t *data, uint16_t len);
-uint8_t IHEX_ReadFile(FILE *fp, uint8_t *data, uint16_t maxlen,
-                      uint16_t *min_addr, uint16_t *max_addr);
+uint8_t IHEX_WriteStream(IHEX_Stream *fp, uint8_t *data, uint16_t len);
+uint8_t IHEX_ReadStream(IHEX_Stream *fp, uint8_t *data, uint16_t maxlen,
+                        uint16_t *min_addr, uint16_t *max_addr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

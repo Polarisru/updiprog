@@ -78,6 +78,22 @@ void help(void)
   printf("\n");
 }
 
+void onLOG(void *, int32_t level, const char * src, const char * msg) {
+    switch (level) {
+        case LOG_LEVEL_INFO:
+          printf("INFO: ");
+          break;
+        case LOG_LEVEL_WARNING:
+          printf("WARNING: ");
+          break;
+        case LOG_LEVEL_ERROR:
+          printf("ERROR: ");
+          break;
+    }
+    puts(msg);
+    printf("\n");
+}
+
 /** \brief Main application function
  *
  * \param [in] argc Number of command line arguments
@@ -232,7 +248,7 @@ int main(int argc, char* argv[])
         case 'm':
           /**< level of messaging */
           if (argv[i][2] >= '0' && argv[i][2] <= '2')
-            LOG_SetLevel(argv[i][2] - '0');
+            LOG_SetLevel(global_LOG(), argv[i][2] - '0');
           break;
         case 'w':
           /**< write to flash from HEX file */
@@ -275,9 +291,23 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  if (LINK_Init(parameters.port, parameters.baudrate, false) == false)
+  UPDI_progress po;
+  po.onstart    = &PROGRESS_CLI_start;
+  po.onprogress = &PROGRESS_CLI_step;
+  po.onfinish   = &PROGRESS_CLI_stop;
+  po.ud = NULL;
+
+  UPDI_APP * app = APP_Init(NULL, &po);
+
+  if (!app) return -2;
+
+  app->DEVICE_Id = parameters.device;
+  app->logger->onlog = &onLOG;
+
+  if (LINK_Init(app, parameters.port, parameters.baudrate, false) == false)
   {
     printf("Can't open port: %s\nPlease check connection and try again.\n", parameters.port);
+    APP_Done(app);
     return -1;
   }
 
@@ -286,15 +316,16 @@ int main(int argc, char* argv[])
   if (parameters.unlock == true)
   {
     printf("Unlocking...   ");
-    if (NVM_UnlockDevice() == true)
+    if (NVM_UnlockDevice(app) == true)
     {
       printf("OK\n");
     }
   }
 
-  if (NVM_EnterProgmode() == false)
+  if (NVM_EnterProgmode(app) == false)
   {
     printf("Can't enter programming mode, exiting\n");
+    APP_Done(app);
     return -1;
   }
 
@@ -302,7 +333,7 @@ int main(int argc, char* argv[])
   if (parameters.erase == true)
   {
     printf("Erasing\n");
-    NVM_ChipErase();
+    NVM_ChipErase(app);
   }
   if (parameters.wr_fuses == true)
   {
@@ -318,7 +349,7 @@ int main(int argc, char* argv[])
         i = (uint8_t)val;
         x = (uint8_t)tVal;
         printf("Writing 0x%02X to fuse Nr. %d\n", x, i);
-        NVM_WriteFuse(i, x);
+        NVM_WriteFuse(app, i, x);
       }
       pch = strchr(pch, ' ');
     }
@@ -326,16 +357,16 @@ int main(int argc, char* argv[])
   if (parameters.rd_fuses == true)
   {
     printf("Reading fuses:\n");
-    for (i = 0; i < DEVICES_GetFusesNumber(); i++)
+    for (i = 0; i < DEVICES_GetFusesNumber(app->DEVICE_Id); i++)
     {
-      x = NVM_ReadFuse(i);
+      x = NVM_ReadFuse(app, i);
       printf("  0x%02X: 0x%02X\n", i, x);
     }
   }
   if (parameters.write == true)
   {
     printf("Writing from file: %s\n", parameters.wr_file);
-    NVM_LoadIhex(parameters.wr_file, DEVICES_GetFlashStart(), DEVICES_GetFlashLength());
+    NVM_LoadIhexFile(app, parameters.wr_file, DEVICES_GetFlashStart(app->DEVICE_Id), DEVICES_GetFlashLength(app->DEVICE_Id));
   }
   if (parameters.read == true)
   {
@@ -356,19 +387,19 @@ int main(int argc, char* argv[])
       ch = 0;
     }
     printf("Reading to file: %s%c%s\n", cwd, ch, parameters.rd_file);
-    NVM_SaveIhex(parameters.rd_file, DEVICES_GetFlashStart(), DEVICES_GetFlashLength());
+    NVM_SaveIhexFile(app, parameters.rd_file, DEVICES_GetFlashStart(app->DEVICE_Id), DEVICES_GetFlashLength(app->DEVICE_Id));
   }
   if (parameters.lock == true)
   {
     printf("Locking MCU...   ");
-    if (NVM_WriteFuse(DEVICE_LOCKBIT_ADDR, 0x00) == true)
+    if (NVM_WriteFuse(app, DEVICE_LOCKBIT_ADDR, 0x00) == true)
     {
       printf("OK\n");
     }
   }
 
-  NVM_LeaveProgmode();
-  PHY_Close();
+  NVM_LeaveProgmode(app);
+  APP_Done(app);
 
   return 0;
 }

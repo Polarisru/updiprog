@@ -1,6 +1,11 @@
 #include <string.h>
 #include "devices.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 tDevice DEVICES_List[] =
 {
   {
@@ -257,15 +262,13 @@ tDevice DEVICES_List[] =
   }
 };
 
-static int8_t DEVICE_Id = DEVICE_UNKNOWN_ID;
-
 /** \brief Get device ID from name string
  *
  * \param [in] name Name to find as string
  * \return index of the found device or -1 as error
  *
  */
-int8_t DEVICES_GetId(char *name)
+int8_t DEVICES_GetId(const char *name)
 {
   uint8_t i;
 
@@ -273,13 +276,11 @@ int8_t DEVICES_GetId(char *name)
   {
     if (strcmp(name, DEVICES_List[i].name) == 0)
     {
-      DEVICE_Id = i;
       return i;
     }
   }
 
-  DEVICE_Id = DEVICE_UNKNOWN_ID;
-  return -1;
+  return DEVICE_UNKNOWN_ID;
 }
 
 /** \brief Get flash memory length for selected device
@@ -287,12 +288,12 @@ int8_t DEVICES_GetId(char *name)
  * \return Size of the flash memory as uint16_t
  *
  */
-uint16_t DEVICES_GetFlashLength(void)
+uint16_t DEVICES_GetFlashLength(int8_t id)
 {
-  if (DEVICE_Id == DEVICE_UNKNOWN_ID)
+  if (id == DEVICE_UNKNOWN_ID)
     return 0;
   else
-    return DEVICES_List[DEVICE_Id].flash_size;
+    return DEVICES_List[id].flash_size;
 }
 
 /** \brief Get flash start address for selected device
@@ -300,12 +301,12 @@ uint16_t DEVICES_GetFlashLength(void)
  * \return Address of the flash area as uint16_t
  *
  */
-uint16_t DEVICES_GetFlashStart(void)
+uint16_t DEVICES_GetFlashStart(int8_t id)
 {
-  if (DEVICE_Id == DEVICE_UNKNOWN_ID)
+  if (id == DEVICE_UNKNOWN_ID)
     return 0;
   else
-    return DEVICES_List[DEVICE_Id].flash_start;
+    return DEVICES_List[id].flash_start;
 }
 
 /** \brief Get flash page size for selected device
@@ -313,12 +314,12 @@ uint16_t DEVICES_GetFlashStart(void)
  * \return Flash page size as uint16_t
  *
  */
-uint16_t DEVICES_GetPageSize(void)
+uint16_t DEVICES_GetPageSize(int8_t id)
 {
-  if (DEVICE_Id == DEVICE_UNKNOWN_ID)
+  if (id == DEVICE_UNKNOWN_ID)
     return 0;
   else
-    return DEVICES_List[DEVICE_Id].flash_pagesize;
+    return DEVICES_List[id].flash_pagesize;
 }
 
 /** \brief Get NVM control registers address for selected device
@@ -326,12 +327,12 @@ uint16_t DEVICES_GetPageSize(void)
  * \return NVM registers adress as uint16_t
  *
  */
-uint16_t DEVICES_GetNvmctrlAddress(void)
+uint16_t DEVICES_GetNvmctrlAddress(int8_t id)
 {
-  if (DEVICE_Id == DEVICE_UNKNOWN_ID)
+  if (id == DEVICE_UNKNOWN_ID)
     return 0;
   else
-    return DEVICES_List[DEVICE_Id].nvmctrl_address;
+    return DEVICES_List[id].nvmctrl_address;
 }
 
 /** \brief Get fuses address for selected device
@@ -339,12 +340,20 @@ uint16_t DEVICES_GetNvmctrlAddress(void)
  * \return Fuses address as uint16_t
  *
  */
-uint16_t DEVICES_GetFusesAddress(void)
+uint16_t DEVICES_GetFusesAddress(int8_t id)
 {
-  if (DEVICE_Id == DEVICE_UNKNOWN_ID)
+  if (id == DEVICE_UNKNOWN_ID)
     return 0;
   else
-    return DEVICES_List[DEVICE_Id].fuses_address;
+    return DEVICES_List[id].fuses_address;
+}
+
+uint16_t DEVICES_GetSigRowAddress(int8_t id)
+{
+  if (id == DEVICE_UNKNOWN_ID)
+    return 0;
+  else
+    return DEVICES_List[id].sigrow_address;
 }
 
 /** \brief Get number of the fuses for selected device
@@ -352,12 +361,12 @@ uint16_t DEVICES_GetFusesAddress(void)
  * \return Number of the fuses as uint8_t
  *
  */
-uint8_t DEVICES_GetFusesNumber(void)
+uint8_t DEVICES_GetFusesNumber(int8_t id)
 {
-  if (DEVICE_Id == DEVICE_UNKNOWN_ID)
+  if (id == DEVICE_UNKNOWN_ID)
     return 0;
   else
-    return DEVICES_List[DEVICE_Id].number_of_fuses;
+    return DEVICES_List[id].number_of_fuses;
 }
 
 /** \brief Get number of devices in the list
@@ -381,3 +390,7 @@ char *DEVICES_GetNameByNumber(uint8_t number)
     number = 0;
   return DEVICES_List[number].name;
 }
+
+#ifdef __cplusplus
+}
+#endif

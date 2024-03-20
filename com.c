@@ -1,26 +1,18 @@
-#ifdef __MINGW32__
-#include <windows.h>
-#include <winbase.h>
-#endif
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__linux)
-#include <sys/types.h>
-#include <fcntl.h>
-#include <termios.h>
-#include <unistd.h>
-#endif
+#include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include <math.h>
 
-#ifdef __MINGW32__
-static HANDLE hSerial;
-#endif
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__linux)
-static int fd;
-#endif
+#include "com.h"
+#include "log.h"
+#include "msgs.h"
 
-static uint32_t COM_Baudrate = 115200;
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /** \brief Open COM port with settings
  *
@@ -31,22 +23,35 @@ static uint32_t COM_Baudrate = 115200;
  * \return true if succeed
  *
  */
-bool COM_Open(char *port, uint32_t baudrate, bool have_parity, bool two_stopbits)
+UPDI_COM_port* COM_Open(char *port, uint32_t baudrate, bool have_parity, bool two_stopbits)
 {
-  printf("Opening %s at %u baud\n", port, baudrate);
-  COM_Baudrate = baudrate;
+  int port_len = strlen(port);
+  if ((port_len <= 1) || (port_len >= COMPORT_LEN)) return NULL;
+
+  UPDI_COM_port * res = (UPDI_COM_port *)malloc(sizeof(UPDI_COM_port));
+
+  if (!res) return NULL;
+
+  LOG_Print_GLOBAL(LOG_LEVEL_INFO, MSG_OPEN_COM, port, baudrate);
+
+  memcpy(&(res->port[0]), port, port_len);
+  res->port[port_len] = 0;
+
+  res->COM_Baudrate = baudrate;
   #ifdef __MINGW32__
   char str[64];
   uint8_t multiplier;
 
   sprintf(str, "\\\\.\\%s", port);
-  hSerial = CreateFile(str, GENERIC_READ | GENERIC_WRITE, 0,
+  res->hSerial = CreateFile(str, GENERIC_READ | GENERIC_WRITE, 0,
                               NULL, OPEN_EXISTING, 0, NULL);
-  if (hSerial == INVALID_HANDLE_VALUE)
-    return false;
+  if (res->hSerial == INVALID_HANDLE_VALUE) {
+    free(res);
+    return NULL;
+  }
   DCB dcbSerialParams = { 0 }; // Initializing DCB structure
   dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-  GetCommState(hSerial, &dcbSerialParams);
+  GetCommState(res->hSerial, &dcbSerialParams);
   dcbSerialParams.BaudRate = baudrate;  // Setting BaudRate
   dcbSerialParams.ByteSize = 8;         // Setting ByteSize = 8
   if (two_stopbits == true)
@@ -58,7 +63,7 @@ bool COM_Open(char *port, uint32_t baudrate, bool have_parity, bool two_stopbits
   else
     dcbSerialParams.Parity   = NOPARITY;
   dcbSerialParams.fDtrControl = DTR_CONTROL_DISABLE;
-  SetCommState(hSerial, &dcbSerialParams);
+  SetCommState(res->hSerial, &dcbSerialParams);
   COMMTIMEOUTS timeouts;
   multiplier = (uint8_t)ceil((float)100000 / baudrate);
   timeouts.ReadIntervalTimeout = 20 * multiplier;
@@ -66,16 +71,22 @@ bool COM_Open(char *port, uint32_t baudrate, bool have_parity, bool two_stopbits
   timeouts.ReadTotalTimeoutConstant = 100 * multiplier;
   timeouts.WriteTotalTimeoutMultiplier = 1;
   timeouts.WriteTotalTimeoutConstant = 1;
-  SetCommTimeouts(hSerial, &timeouts);
+  SetCommTimeouts(res->hSerial, &timeouts);
   //COM_Bytes = 0;
   #endif
 
   #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__linux)
-  fd = open(port, O_RDWR | O_NOCTTY );
-  if (fd <0)
+  res->fd = open(port, O_RDWR | O_NOCTTY | O_NDELAY | O_SYNC );
+  if (res->fd <0) {
+    free(res);
     return false;
+  }
+  int f = fcntl(res->fd, F_GETFL, 0);
+  f &= ~O_NONBLOCK;
+  fcntl(res->fd, F_SETFL, f);
   struct termios SerialPortSettings;
-  tcgetattr(fd, &SerialPortSettings);	/* Get the current attributes of the Serial port */
+  memset(&SerialPortSettings, 0, sizeof(SerialPortSettings));
+  //tcgetattr(res->fd, &SerialPortSettings);	/* Get the current attributes of the Serial port */
   /* Setting the Baud rate */
   switch (baudrate)
   {
@@ -114,14 +125,17 @@ bool COM_Open(char *port, uint32_t baudrate, bool have_parity, bool two_stopbits
     SerialPortSettings.c_cflag |= CSTOPB;   /* CSTOPB = 2 Stop bits */
   else
     SerialPortSettings.c_cflag &= ~CSTOPB;  /* CSTOPB = 2 Stop bits,here it is cleared so 1 Stop bit */
-  SerialPortSettings.c_cflag |= (CREAD | CLOCAL); /* Enable receiver,Ignore Modem Control lines       */
+  SerialPortSettings.c_cflag |= (CREAD | CLOCAL | CS8); // Enable receiver,Ignore Modem Control lines
   SerialPortSettings.c_cc[VMIN]  = 0;            // read doesn't block
-  SerialPortSettings.c_cc[VTIME] = 5;            // 0.1 seconds read timeout
-  tcsetattr(fd, TCSANOW, &SerialPortSettings);  /* Set the attributes to the termios structure*/
-  tcflush(fd, TCIFLUSH);
+  SerialPortSettings.c_cc[VTIME] = 5;            // 0.5 seconds read timeout
+  tcflush(res->fd, TCIFLUSH);
+  tcsetattr(res->fd, TCSAFLUSH, &SerialPortSettings);  // Set the attributes to the termios structure
+  // Flush to put settings to work
+  tcflush(res->fd, TCIOFLUSH);
+
   #endif
 
-  return true;
+  return res;
 }
 
 /** \brief Write data to COM port
@@ -131,8 +145,10 @@ bool COM_Open(char *port, uint32_t baudrate, bool have_parity, bool two_stopbits
  * \return 0 if everything Ok
  *
  */
-int COM_Write(uint8_t *data, uint16_t len)
+int COM_Write(UPDI_COM_port* port, uint8_t *data, uint16_t len)
 {
+  if (!port) return -1;
+
   #ifdef __MINGW32__
   DWORD dwBytesWritten = 0;
   //DWORD signal;
@@ -140,12 +156,12 @@ int COM_Write(uint8_t *data, uint16_t len)
   //int res;
   //ov.hEvent = CreateEvent(NULL, true, true, NULL);
 
-  if (!WriteFile(hSerial, data, len, &dwBytesWritten, NULL))
+  if (!WriteFile(port->hSerial, data, len, &dwBytesWritten, NULL))
     return -1;
   //COM_Bytes += dwBytesWritten;
-//  WriteFile(hSerial, data, len, &dwBytesWritten, &ov);
+//  WriteFile(port->hSerial, data, len, &dwBytesWritten, &ov);
 //  signal = WaitForSingleObject(ov.hEvent, INFINITE);
-//  if ((signal == WAIT_OBJECT_0) && (GetOverlappedResult(hSerial, &ov, &dwBytesWritten, true)))
+//  if ((signal == WAIT_OBJECT_0) && (GetOverlappedResult(port->hSerial, &ov, &dwBytesWritten, true)))
 //    res = 0;
 //  else
 //    res = -1;
@@ -153,7 +169,7 @@ int COM_Write(uint8_t *data, uint16_t len)
 //  return res;
   #endif
   #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__linux)
-  int iOut = write(fd, data, len);
+  int iOut = write(port->fd, data, len);
   if (iOut < 0)
     return -1;
   #endif
@@ -168,38 +184,49 @@ int COM_Write(uint8_t *data, uint16_t len)
  * \return number of received bytes as int
  *
  */
-int COM_Read(uint8_t *data, uint16_t len)
+int COM_Read(UPDI_COM_port* port, uint8_t *data, uint16_t len)
 {
+  if (!port) return -1;
+
   #ifdef __MINGW32__
   //OVERLAPPED ov = { 0 };
   //COMSTAT status;
   //DWORD errors;
   //DWORD mask, btr, temp, signal;
   DWORD dwBytesRead = 0;
-//  ClearCommError(hSerial, &errors, &status);
-//  if (!ReadFile(hSerial, data, len, &dwBytesRead, &ov))
+//  ClearCommError(port->hSerial, &errors, &status);
+//  if (!ReadFile(port->hSerial, data, len, &dwBytesRead, &ov))
 //    return -1;
 
 //  btr = 0;
 //  while (btr < len)
 //  {
-//    SetCommMask(hSerial, EV_RXCHAR);
-//    WaitCommEvent(hSerial, &mask, NULL);
+//    SetCommMask(port->hSerial, EV_RXCHAR);
+//    WaitCommEvent(port->hSerial, &mask, NULL);
 //    if (mask & EV_ERR)
 //      break;
-//    ClearCommError(hSerial, &temp, &status);
+//    ClearCommError(port->hSerial, &temp, &status);
 //    btr = status.cbInQue;
 //    if (btr >= len)
 //    {
-//      ReadFile(hSerial, data, len, &dwBytesRead, NULL);
+//      ReadFile(port->hSerial, data, len, &dwBytesRead, NULL);
 //    }
 //  }
-  ReadFile(hSerial, data, len, &dwBytesRead, NULL);
+  ReadFile(port->hSerial, data, len, &dwBytesRead, NULL);
   #endif
   #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__linux)
-  int dwBytesRead = read(fd, data, len);
-  if (dwBytesRead < 0)
-    return -1;
+  int dwBytesRead = 0;
+
+  while (len > 0) {
+      int c = read(port->fd, data, len);
+      if (c < 0)  // error
+        return -1;
+      if (c == 0) // timeout
+        break;
+      data += c;
+      dwBytesRead += c;
+      len -= c;
+  }
   #endif
 
   return dwBytesRead;
@@ -211,18 +238,18 @@ int COM_Read(uint8_t *data, uint16_t len)
  * \return time in milliseconds as uint16_t
  *
  */
-uint16_t COM_GetTransTime(uint16_t len)
+uint16_t COM_GetTransTime(UPDI_COM_port* port, uint16_t len)
 {
-  return (uint16_t)(len * 1000 * 11 / COM_Baudrate + 1);
+  return (uint16_t)(len * 1000 * 11 / port->COM_Baudrate + 1);
 }
 
 #ifdef __MINGW32__
-void COM_WaitForTransmit(void)
+void COM_WaitForTransmit(UPDI_COM_port* port)
 {
   COMSTAT rStat;
   DWORD nErr;
   do {
-    ClearCommError(hSerial, &nErr, &rStat);
+    ClearCommError(port->hSerial, &nErr, &rStat);
   } while (rStat.cbOutQue > 0);
 }
 #endif // __MINGW32__
@@ -232,13 +259,23 @@ void COM_WaitForTransmit(void)
  * \return Nothing
  *
  */
-void COM_Close(void)
+void COM_Close(UPDI_COM_port** port)
 {
-  printf("Closing COM port\n");
+  if (!port) return;
+  if (!(*port)) return;
+
+  LOG_Print_GLOBAL(LOG_LEVEL_INFO, MSG_CLOSE_COM, (*port)->port);
   #ifdef __MINGW32__
-  CloseHandle(hSerial);
+  CloseHandle((*port)->hSerial);
   #endif
   #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__linux)
-  close(fd);
+  close((*port)->fd);
   #endif
+
+  free(*port);
+  *port = NULL;
 }
+
+#ifdef __cplusplus
+}
+#endif

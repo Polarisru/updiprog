@@ -1,0 +1,429 @@
+object Form1: TForm1
+  Left = 425
+  Height = 540
+  Top = 100
+  Width = 516
+  BorderStyle = bsDialog
+  Caption = 'UPDI GUI'
+  ClientHeight = 540
+  ClientWidth = 516
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  LCLVersion = '2.2.2.0'
+  object Panel1: TPanel
+    Left = 0
+    Height = 352
+    Top = 0
+    Width = 516
+    Align = alClient
+    BevelOuter = bvNone
+    ClientHeight = 352
+    ClientWidth = 516
+    TabOrder = 0
+    object Label1: TLabel
+      Left = 12
+      Height = 15
+      Top = 64
+      Width = 68
+      Caption = 'Device name'
+      ParentColor = False
+    end
+    object Label2: TLabel
+      Left = 12
+      Height = 15
+      Top = 8
+      Width = 22
+      Caption = 'Port'
+      ParentColor = False
+    end
+    object FusesBox: TGroupBox
+      Left = 16
+      Height = 224
+      Top = 128
+      Width = 153
+      Caption = 'Fuses'
+      ClientHeight = 204
+      ClientWidth = 149
+      TabOrder = 0
+      object FusesGrid: TStringGrid
+        Left = 4
+        Height = 161
+        Top = 4
+        Width = 141
+        Align = alTop
+        BorderSpacing.Around = 4
+        ColCount = 3
+        DefaultColWidth = 48
+        FixedCols = 2
+        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing, goSmoothScroll]
+        RowCount = 1
+        TabOrder = 0
+        OnDrawCell = FusesGridDrawCell
+        OnPrepareCanvas = FusesGridPrepareCanvas
+      end
+      object ReadFuses: TButton
+        Left = 8
+        Height = 25
+        Top = 176
+        Width = 64
+        Caption = 'Read'
+        OnClick = ReadFusesClick
+        TabOrder = 1
+      end
+      object WriteFuses: TButton
+        Left = 80
+        Height = 25
+        Top = 176
+        Width = 64
+        Caption = 'Write'
+        OnClick = WriteFusesClick
+        TabOrder = 2
+      end
+    end
+    object MemoryBox: TGroupBox
+      Left = 176
+      Height = 224
+      Top = 128
+      Width = 325
+      Caption = 'Memory'
+      ClientHeight = 204
+      ClientWidth = 321
+      TabOrder = 1
+      object InputHEXFile: TFileNameEdit
+        Left = 8
+        Height = 23
+        Top = 24
+        Width = 304
+        Filter = 'Hex file|*.hex'
+        FilterIndex = 0
+        HideDirectories = False
+        ButtonWidth = 32
+        NumGlyphs = 1
+        MaxLength = 0
+        TabOrder = 0
+        OnChange = InputHEXFileChange
+      end
+      object EraseDeviceCheckBox: TCheckBox
+        Left = 8
+        Height = 19
+        Top = 120
+        Width = 199
+        Caption = 'Erase Device Before Programming'
+        TabOrder = 1
+      end
+      object VerifyDeviceCheckBox: TCheckBox
+        Left = 8
+        Height = 19
+        Top = 144
+        Width = 194
+        Caption = 'Verify Device After Programming'
+        OnChange = VerifyDeviceCheckBoxChange
+        TabOrder = 2
+      end
+      object FlashButton: TButton
+        Left = 8
+        Height = 25
+        Top = 176
+        Width = 75
+        Caption = 'Flash'
+        OnClick = FlashButtonClick
+        TabOrder = 3
+      end
+      object VerifyButton: TButton
+        Left = 120
+        Height = 25
+        Top = 176
+        Width = 75
+        Caption = 'Verify'
+        OnClick = VerifyButtonClick
+        TabOrder = 4
+      end
+      object ReadButton: TButton
+        Left = 232
+        Height = 25
+        Top = 176
+        Width = 75
+        Caption = 'Read'
+        OnClick = ReadButtonClick
+        TabOrder = 5
+      end
+      object Label3: TLabel
+        Left = 8
+        Height = 15
+        Top = 4
+        Width = 114
+        Caption = 'File to read/save flash'
+        ParentColor = False
+      end
+    end
+    object Label4: TLabel
+      Left = 368
+      Height = 15
+      Top = 8
+      Width = 47
+      Caption = 'Baudrate'
+      ParentColor = False
+    end
+    object Label5: TLabel
+      Left = 248
+      Height = 15
+      Top = 64
+      Width = 48
+      Caption = 'Device id'
+      ParentColor = False
+    end
+    object Label6: TLabel
+      Left = 336
+      Height = 15
+      Top = 64
+      Width = 58
+      Caption = 'Device S/N'
+      ParentColor = False
+    end
+    object Panel3: TPanel
+      Left = 12
+      Height = 32
+      Top = 24
+      Width = 492
+      BevelOuter = bvNone
+      ClientHeight = 32
+      ClientWidth = 492
+      TabOrder = 2
+      object PortComboBox: TComboBox
+        Left = 2
+        Height = 23
+        Top = 2
+        Width = 319
+        Align = alClient
+        BorderSpacing.Around = 2
+        ItemHeight = 15
+        OnChange = PortComboBoxChange
+        OnSelect = PortComboBoxSelect
+        Style = csDropDownList
+        TabOrder = 0
+      end
+      object RefreshTTYButton: TSpeedButton
+        Left = 323
+        Height = 32
+        Hint = 'Refresh List Of Devices'
+        Top = 0
+        Width = 32
+        Align = alRight
+        Images = ImageList1
+        ImageIndex = 0
+        OnClick = RefreshTTYButtonClick
+        ShowHint = True
+        ParentShowHint = False
+      end
+      object BaudComboBox: TComboBox
+        Left = 357
+        Height = 23
+        Top = 2
+        Width = 133
+        Align = alRight
+        BorderSpacing.Around = 2
+        ItemHeight = 15
+        ItemIndex = 4
+        Items.Strings = (
+          '300'
+          '9600'
+          '38400'
+          '57600'
+          '115200'
+          '230400'
+        )
+        OnSelect = BaudComboBoxSelect
+        Style = csDropDownList
+        TabOrder = 1
+        Text = '115200'
+      end
+    end
+    object Panel4: TPanel
+      Left = 12
+      Height = 32
+      Top = 80
+      Width = 492
+      BorderSpacing.Around = 2
+      BevelOuter = bvNone
+      ClientHeight = 32
+      ClientWidth = 492
+      TabOrder = 3
+      object DevicesComboBox: TComboBox
+        Left = 2
+        Height = 23
+        Top = 2
+        Width = 173
+        Align = alClient
+        BorderSpacing.Around = 2
+        ItemHeight = 15
+        OnChange = DevicesComboBoxChange
+        OnSelect = DevicesComboBoxSelect
+        Style = csDropDownList
+        TabOrder = 0
+      end
+      object EraseDeviceButton: TSpeedButton
+        Left = 177
+        Height = 32
+        Hint = 'Erase Device'
+        Top = 0
+        Width = 32
+        Align = alRight
+        Images = ImageList1
+        ImageIndex = 1
+        OnClick = EraseDeviceButtonClick
+        ShowHint = True
+        ParentShowHint = False
+      end
+      object DeviceInfoButton: TSpeedButton
+        Left = 209
+        Height = 32
+        Hint = 'Get Device Info'
+        Top = 0
+        Width = 32
+        Align = alRight
+        Images = ImageList1
+        ImageIndex = 2
+        OnClick = DeviceInfoButtonClick
+        ShowHint = True
+        ParentShowHint = False
+      end
+      object DevIdText: TEdit
+        Left = 243
+        Height = 28
+        Top = 2
+        Width = 80
+        Align = alRight
+        BorderSpacing.Around = 2
+        ReadOnly = True
+        TabOrder = 1
+      end
+      object DeviceSNText: TEdit
+        Left = 325
+        Height = 28
+        Top = 2
+        Width = 165
+        Align = alRight
+        BorderSpacing.Around = 2
+        ReadOnly = True
+        TabOrder = 2
+      end
+    end
+  end
+  object Panel2: TPanel
+    Left = 0
+    Height = 188
+    Top = 352
+    Width = 516
+    Align = alBottom
+    BevelOuter = bvNone
+    ClientHeight = 188
+    ClientWidth = 516
+    TabOrder = 1
+    object ProgressBar1: TProgressBar
+      Left = 4
+      Height = 20
+      Top = 164
+      Width = 508
+      Align = alBottom
+      BorderSpacing.Around = 4
+      TabOrder = 0
+      Visible = False
+    end
+    object Log: TMemo
+      Left = 12
+      Height = 140
+      Top = 12
+      Width = 492
+      Align = alClient
+      BorderSpacing.Around = 12
+      Font.Name = 'Monospace'
+      ParentFont = False
+      ReadOnly = True
+      ScrollBars = ssBoth
+      TabOrder = 1
+      WordWrap = False
+    end
+  end
+  object ImageList1: TImageList
+    Height = 24
+    Width = 24
+    Left = 392
+    Top = 216
+    Bitmap = {
+      4C7A0300000018000000180000003B0800000000000078DAE5987B50D4D715C7
+      512B7F74324D99092F5FC5C447AC9319A313A74D67D234D34EDA4E5A51405858
+      764163AC89A653C7881A4C5779C91B16C1F07E88101804149228A3F816458D0A
+      3E8AF8401158DEEF87B0ECB7E7FC7EF9ADEBCEB20B48FA4F7F33DFB9DCDFEF9E
+      CF39F7DC7BCF05ACACFEB70FF255D6280DB19994C8764CEED1BD4B51BAA71C25
+      7B9EA14485C9896C9941AC17D8A5FE4B70543580EF43B4B89A075C2F9C9CD896
+      19CC22A69E7FE4CB527C1BA0C5D3EB40F3DD97133398454C3DBF68671F2A3281
+      A66A51F557819BC5C0B5BCF189C7B28D64CF2C62EAF987FD80CBD9E4FB06F0E8
+      12687E5AE1DD44C4366CCB0C66D13B3DBF601BF9CC009E500C577221F4F3B7AF
+      C4A11D36E3128F651BB66506B3A8FF7C4F6E052EA4027597C596FA13DFD76333
+      90F74FE05C12F0E082D8527FC27C330CE46E01CE1C006ACF882DF527CC37C340
+      CE67C0A978A0A65C6CA96F9197F3991A399B1BC7C340F63F8093B1C09D32B1A5
+      BE5976F6A660C1C6609C39060E7E029C88026E7D4FDFD410FA899FCC34C93EB8
+      D14FF89EBB591C7768938D204306B7D4D7DB647D0C9485035525C0453A1BDC3F
+      B84183AC0D51867E90B97E237DD309B5A62C421C67287EC70C66515F6F97B1AE
+      0947FF4D35A448D4A904E0C85740862F90EEB3451CE32B43A68F0E453B74F881
+      6A4D650E709C78C7C34495458AEFD8FEDB0020D37750CF4F5724918F515C48A7
+      F35EF05C399F8ED0B743225FD981ACF53A54E6BE38C658679321B03294857A7E
+      9AAF2DD2941A8A518B92BDC077C162BD4DF3D62145EE278E91CB483A3A973A5C
+      A19A539145E342C4B1920A77928D424731DD47A2ECB517D62D53311B299E6548
+      F11AA516D40E23D52B8FF2FF73FD9814D946FA463EB603A5148730CE40A9F226
+      6A69CDDC5E1DFB9CBB5923C1D3865B93DF933CFD902CA375514268792C2BDBEB
+      1753768726C9820536E927BBA793656A247B365AFD3F3C9E31EFCDF088393CDD
+      3D2AC2CA39FA9753CD7E6563569B5348056C3ECFD74E738BAAB3728B5A3055F8
+      19B2D802662FCFE9C0A2D86AD86E3F8AE96BA3EAA7CAC774F7C8488E9BD9828F
+      9829F641F99EE61E55C7CCB17C38A8429CEC549167AC54AA9F4DCA0731C8C763
+      533E66CA23358E41EA7AA7849C01C73D912E939E87091F0BA32AE11818DFB3FC
+      E475BC7FE10EE686ECAF7CA95C79443B4D5B1BF5887D2C88AEC49C90C4EE95E5
+      37F097EB7570ABAEC7BCCD85EDD68B4E79BC940F9A87B53CA289E3FECDA91BF8
+      E8C66378DE7A8A0F131E63FACC5B7875D9D98185A1F10F17EE4BC8B5DB1DFEDB
+      89E2792D6705C53D7DF7F44DACBAF904DEB71BF051723D6658DFC2ECB7EE21F8
+      7607929A7AB0B7EA01FE7CB0A86DF1BEFDD71C7646FC7ADCFCBDD1A7177E9DDB
+      FFD74B355010FBEF29CFD91177BB90D5DC8782B60114B70FE270DB20A2EF3560
+      993AAD797EF07E7FAA7AD32C3AA03DE8F855F8EAB941EA8AF99B0B5B3827F3DE
+      BE87989A2E7CD3DA8FD2CE219CEC1E4659D7308AC84726F98BADEFC2AAA213BD
+      F383E3AECC5685CE19EF5CAC179FF0B279FBDC80C8A63F3F3A9FE1629F16177A
+      B5C2CFB9E4EFEBC61E843EE9C4AE07ADF0AAB8AD7B2322B9696E605CDAAC9DC1
+      6F8EC7C7D288C4FAEC967E94740CE174CF08CE11FB18B1F3C85F72532F22EA3B
+      E1FFB00D5BEE350BF9E4357BE7D865DDBC988C56878068B525FEE2D003F799C5
+      7C8EF908B539E42F91D6389CD8BB89FD39B195771AE04CEC3F5C7B84E597EFE3
+      5705E53AFBBD31BB2CF1DF0C4BB894FAA4438897F391AEE9437C4337F6514EBE
+      14E2D6E8D91F107B05B1179CFF0FECA2523576FE616F58E22F0854EFD97AB14A
+      C7B948A05C47D25A06D4B5C38FF2FD698D06F21F73F2BE1077ADC0B62DAD8043
+      40ECB971EDD7DD21EFFC31FB486B38C51B58D721C4FCAFDA666CB8DB04199D3B
+      3E7FEF5D7D8865976AF13AB3CBAB611792D06CAF0A797D7CE7397FC6A2B0030D
+      BC3FB6D6B660538D980F97AA7A7C4875E3DD2B0FF056C53D389DBB0BDB53B760
+      1F9BD1EEA08A514CE44CCF0F5667B99EB9AEF3BDD308F7EAA7F81BC5CCB95E49
+      B95E72B10673CE12FB6415ECA2D3DAEC0363774CB466F03A2D51676838CF7FFA
+      A10EBFA398391F9C6B873377605B7C7ED43E38BED1D13F62CD64CBDE9CA0B863
+      2B8E578EAEF831E6799C8FE2F314737AB35DA0FA3BBB5D41F62F535667A9225E
+      E3BA37AFF82CEC93F23BEC83E31A1D02D4798EFEA14BA6EA77017B55F8077641
+      B1FB1D7687FD7EA96AECFF95987B7C3F5E8FE75A27C887A45CEF2B48B1CE070A
+      5F1F78FB2AE1EDA3845CA98097D21B5E0A6F782AE4F0F496C3127F7878182323
+      23D06AB57A719FDF3F7BF60C434343181818405F5F1F7A7A7AD0D5D5858E8E0E
+      B4B7B74326F7B2C837648F8E8E9AF431383888FEFE7EF4F6F60AFCCECE4E81EF
+      E1E569912F718DC5EF4DF1BBBBBBF57C774F0FB37CCEB5C4D7E9748224BEEE8B
+      2F006B6B68B76D7B2147867C3799FB84F9920F6693B1D01AAF81C477F5586B91
+      AF8FD788AFDBBE5D608F1AC56FC877717733CFA73D3816DF700DC6CACF1A3757
+      B37CA509BE9013238D15FF6A37178B7CE3FC5BE24BF1F31970765D3361BE7E7D
+      4DF0797F1AC6EFEC6281BFCE77CCFD6FC8E7FD6F2AFFCE2EAB2DF2A5F36BB8A6
+      2C63BEA9F3B5CA029FEBD758F5C798CFB11BD787F1F0F9FC4B3E2471DF906FAA
+      BEB5B5B561D51A0B7CAABDBC76ECC358867CE3DC30BFB5B5D5229FEB3AC7C6F3
+      97646A7F4A32ACCD22DFD92C5FEEA310E6CDF14932C797F2CEB919179FEE23CE
+      29CFDD94F81BE7C4704D25764B4B8B453EDF756CCB0C5392B89C13C3BC30BBB9
+      B9D9329FEE51B66386B124A6C495E266315BE49B5F5FBEA3D9D6949827498A59
+      8A9BA5D1682CEE7FBEFFF98EE67B94EF3ABE8FF8CEE0BACEB577B5AB8B50C398
+      2388F2214AEC5BAA0F53FDFC17B225C091
+    }
+  end
+  object Timer1: TTimer
+    Enabled = False
+    Interval = 200
+    OnTimer = Timer1Timer
+    Left = 464
+    Top = 216
+  end
+end

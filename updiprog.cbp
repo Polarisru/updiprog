@@ -33,6 +33,7 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-DUPDI_CLI_mode" />
 		</Compiler>
 		<Unit filename="app.c">
 			<Option compilerVar="CC" />
@@ -61,6 +62,7 @@
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="msgs.h" />
 		<Unit filename="nvm.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -1,9 +1,16 @@
+#include <stdlib.h>
 #include <unistd.h>
-#include "com.h"
+#include <string.h>
 #include "log.h"
 #include "phy.h"
 #include "updi.h"
 #include "sleep.h"
+#include "msgs.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /** \brief Initialize physical interface
  *
@@ -13,7 +20,7 @@
  * \return true if success
  *
  */
-bool PHY_Init(char *port, uint32_t baudrate, bool onDTR)
+UPDI_COM_port * PHY_Init(char *port, uint32_t baudrate, bool onDTR)
 {
   return COM_Open(port, baudrate, true, true);
 }
@@ -27,26 +34,32 @@ bool PHY_Init(char *port, uint32_t baudrate, bool onDTR)
  * \return true if success
  *
  */
-bool PHY_DoBreak(char *port)
+bool PHY_DoBreak(UPDI_COM_port ** port)
 {
   uint8_t buf[] = {UPDI_BREAK, UPDI_BREAK};
 
-  LOG_Print(LOG_LEVEL_INFO, "Sending double break");
-  COM_Close();
+  LOG_Print_GLOBAL(LOG_LEVEL_INFO, MSG_SENDING_DBL_BREAK);
+
+  char portname[COMPORT_LEN];
+  memcpy(&(portname[0]), &((*port)->port[0]), COMPORT_LEN);
+
+  COM_Close(port);
+
   // Re-init at a lower baudrate
   // At 300 bauds, the break character will pull the line low for 30ms
   // Which is slightly above the recommended 24.6ms
   // no parity, one stop bit
-  if (COM_Open(port, 300, false, false) != true)
+  if ((*port = COM_Open(portname, 300, false, false)) != NULL)
     return false;
+
   // Send two break characters, with 1 stop bit in between
-  COM_Write(buf, sizeof(buf));
+  COM_Write(*port, buf, sizeof(buf));
   // Wait for the double break end
   msleep(1000);  // wait for 1 second
-  if (COM_Read(buf, 2) != 2)
-    LOG_Print(LOG_LEVEL_WARNING, "No answer received");
+  if (COM_Read(*port, buf, 2) != 2)
+    LOG_Print_GLOBAL(LOG_LEVEL_WARNING, MSG_NO_ANSWER);
 
-  COM_Close();
+  COM_Close(port);
 
   return true;
 }
@@ -58,21 +71,21 @@ bool PHY_DoBreak(char *port)
  * \return true if success
  *
  */
-bool PHY_Send(uint8_t *data, uint8_t len)
+bool PHY_Send(UPDI_COM_port * port, uint8_t *data, uint8_t len)
 {
   //uint8_t i;
 
   /*for (i = 0; i < len; i++)
   {
-    COM_Write(&data[i], 1);
+    COM_Write(port, &data[i], 1);
   }*/
-  COM_Write(data, len);
+  COM_Write(port, data, len);
   // read echo
   //usleep(10);
-  //msleep(COM_GetTransTime(len));
+  //msleep(COM_GetTransTime(port, len));
   //Sleep(10);
 
-  COM_Read(data, len);
+  COM_Read(port, data, len);
 
   return true;
 }
@@ -84,9 +97,9 @@ bool PHY_Send(uint8_t *data, uint8_t len)
  * \return true if success
  *
  */
-bool PHY_Receive(uint8_t *data, uint16_t len)
+bool PHY_Receive(UPDI_COM_port * port, uint8_t *data, uint16_t len)
 {
-  int val = COM_Read(data, len);
+  int val = COM_Read(port, data, len);
   if ((val < 0) || (val != len))
     return false;
   return true;
@@ -97,7 +110,11 @@ bool PHY_Receive(uint8_t *data, uint16_t len)
  * \return Nothing
  *
  */
-void PHY_Close(void)
+void PHY_Close(UPDI_COM_port ** port)
 {
-  COM_Close();
+  COM_Close(port);
 }
+
+#ifdef __cplusplus
+}
+#endif
